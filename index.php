@@ -59,35 +59,40 @@ if ($currentSeries) {
     $pageTitle = 'Série : ' . htmlspecialchars($currentSeries['name']);
 }
 
-// Récupérer les cartes filtrées
-$cards = getAllCards($perPage, $offset, $seriesId, $condition, $sortBy, $sortOrder);
+// CORRECTION : Récupérer le nombre total de cartes d'abord (sans pagination)
+$totalCardsBeforeFilters = countAllCards($seriesId, $condition);
 
+// Récupérer les cartes filtrées (sans limite pour appliquer les autres filtres)
+// CORRECTION : Récupérer toutes les cartes pour appliquer les filtres restants
+$allFilteredCards = getAllCardsWithoutPagination($seriesId, $condition, $sortBy, $sortOrder);
+
+// Appliquer les filtres supplémentaires
 // Filtrer par rareté si spécifiée
 if ($rarity) {
     $filteredCards = [];
-    foreach ($cards as $card) {
+    foreach ($allFilteredCards as $card) {
         if ($card['rarity'] === $rarity) {
             $filteredCards[] = $card;
         }
     }
-    $cards = $filteredCards;
+    $allFilteredCards = $filteredCards;
 }
 
 // Filtrer par variante si spécifiée
 if ($variant) {
     $filteredCards = [];
-    foreach ($cards as $card) {
+    foreach ($allFilteredCards as $card) {
         if ($card['variant'] === $variant) {
             $filteredCards[] = $card;
         }
     }
-    $cards = $filteredCards;
+    $allFilteredCards = $filteredCards;
 }
 
 // Filtrer par prix si spécifié
 if ($priceMin !== null || $priceMax !== null) {
     $filteredCards = [];
-    foreach ($cards as $card) {
+    foreach ($allFilteredCards as $card) {
         $price = (float)$card['price'];
         $priceOk = true;
 
@@ -103,14 +108,14 @@ if ($priceMin !== null || $priceMax !== null) {
             $filteredCards[] = $card;
         }
     }
-    $cards = $filteredCards;
+    $allFilteredCards = $filteredCards;
 }
 
-// Compter le nombre total de cartes qui correspondent aux filtres
-$totalCards = count($cards);
+// CORRECTION : Compter le nombre total après tous les filtres
+$totalCards = count($allFilteredCards);
 
-// Paginer les résultats
-$cards = array_slice($cards, $offset, $perPage);
+// CORRECTION : Paginer les résultats
+$cards = array_slice($allFilteredCards, $offset, $perPage);
 
 $totalPages = ceil($totalCards / $perPage);
 
@@ -338,7 +343,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 <?php endforeach; ?>
             </div>
 
-            <!-- Pagination -->
+            <!-- Pagination - CORRECTION: Ajout d'un commentaire pour marquer où commence la pagination -->
             <?php if ($totalPages > 1): ?>
                 <div class="mt-8 flex justify-center">
                     <div class="inline-flex rounded-md shadow-sm">
