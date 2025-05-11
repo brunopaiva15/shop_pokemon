@@ -16,14 +16,16 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- CSS personnalisé -->
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/custom.css">
+    <!-- Favicon -->
+    <link rel="icon" href="<?php echo SITE_URL; ?>/assets/images/favicon.ico" type="image/x-icon">
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-red-600 text-white shadow-md">
+    <header class="bg-gray-800 text-white shadow-md">
         <div class="container mx-auto px-4 py-3">
             <div class="flex justify-between items-center">
                 <a href="<?php echo SITE_URL; ?>" class="flex items-center">
-                    <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="BDPokéCards" class="h-10 mr-3">
+                    <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="BDPokéCards" class="h-14 mr-3">
                     <span class="text-2xl font-bold">BDPokéCards</span>
                 </a>
 

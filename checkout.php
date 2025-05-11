@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Votre commande a été enregistrée avec succès. Un email de confirmation a été envoyé à l'adresse indiquée.<br>
                 Nous vous contacterons prochainement avec les instructions de paiement.
             </p>
-            <a href="index.php" class="bg-red-600 text-white py-3 px-6 rounded-md hover:bg-red-700 transition">
+            <a href="index.php" class="bg-gray-800 text-white py-3 px-6 rounded-md hover:bg-gray-900 transition">
                 Retour à la boutique
             </a>
         </div>
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="pt-4">
-                        <button type="submit" class="w-full bg-red-600 text-white py-3 px-6 rounded-md hover:bg-red-700 transition">
+                        <button type="submit" class="w-full bg-gray-800 text-white py-3 px-6 rounded-md hover:bg-gray-900 transition">
                             Confirmer la commande
                         </button>
                     </div>

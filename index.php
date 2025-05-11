@@ -198,7 +198,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         </div>
 
         <div class="space-y-2">
-            <button id="apply-filters" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition">
+            <button id="apply-filters" class="w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
                 Appliquer les filtres
             </button>
             <button id="reset-filters" class="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
@@ -231,7 +231,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
                 <h3 class="text-2xl font-bold mb-2">Aucune carte trouvée</h3>
                 <p class="text-gray-600 mb-4">Aucune carte ne correspond à vos critères de recherche.</p>
-                <a href="index.php" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+                <a href="index.php" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition">
                     Voir toutes les cartes
                 </a>
             </div>
@@ -240,7 +240,17 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <?php foreach ($cards as $card): ?>
                     <div class="card-item bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                        <div class="card-image-zoom p-4 bg-gray-100">
+                        <div class="card-image-zoom p-4 bg-gray-100 relative">
+                            <?php
+                            $createdAt = strtotime($card['created_at']);
+                            $twoWeeksAgo = strtotime('-14 days');
+                            if ($createdAt !== false && $createdAt > $twoWeeksAgo):
+                            ?>
+                                <div class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow">
+                                    Nouveau
+                                </div>
+                            <?php endif; ?>
+
                             <a href="card-details.php?id=<?php echo $card['id']; ?>">
                                 <img src="<?php echo $card['image_url'] ?: 'assets/images/card-placeholder.png'; ?>"
                                     alt="<?php echo htmlspecialchars($card['name']); ?>"
@@ -270,7 +280,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                 <div class="font-bold text-xl text-red-600"><?php echo formatPrice($card['price']); ?></div>
 
                                 <?php if ($card['quantity'] > 0): ?>
-                                    <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition">
+                                    <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
                                         <i class="fas fa-shopping-cart mr-1"></i> Ajouter
                                     </button>
                                 <?php else: ?>
@@ -303,7 +313,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                         for ($i = $startPage; $i <= $endPage; $i++):
                         ?>
                             <a href="<?php echo $paginationUrl . $i; ?>"
-                                class="px-4 py-2 text-sm font-medium <?php echo $i == $page ? 'text-white bg-red-600 hover:bg-red-700' : 'text-gray-700 bg-white hover:bg-gray-100'; ?> border border-gray-300">
+                                class="px-4 py-2 text-sm font-medium <?php echo $i == $page ? 'text-white bg-gray-800 hover:bg-gray-900' : 'text-gray-700 bg-white hover:bg-gray-100'; ?> border border-gray-300">
                                 <?php echo $i; ?>
                             </a>
                         <?php endfor; ?>

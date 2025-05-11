@@ -384,7 +384,7 @@ function getCartItemCount()
 // Fonctions d'aide
 function sanitizeInput($input)
 {
-    return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
+    return trim($input);
 }
 
 function formatPrice($price)

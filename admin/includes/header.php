@@ -22,6 +22,8 @@ if (!isUserLoggedIn() || !isAdmin()) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- CSS personnalisé -->
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/custom.css">
+    <!-- Favicon -->
+    <link rel="icon" href="<?php echo SITE_URL; ?>/assets/images/favicon.ico" type="image/x-icon">
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">

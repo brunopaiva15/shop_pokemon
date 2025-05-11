@@ -13,7 +13,6 @@
                 <ul class="space-y-2">
                     <li><a href="<?php echo SITE_URL; ?>" class="text-gray-300 hover:text-white transition">Accueil</a></li>
                     <li><a href="<?php echo SITE_URL; ?>/cart.php" class="text-gray-300 hover:text-white transition">Panier</a></li>
-                    <li><a href="<?php echo SITE_URL; ?>/checkout.php" class="text-gray-300 hover:text-white transition">Commander</a></li>
                 </ul>
             </div>
 
@@ -28,7 +27,7 @@
 
         <div class="mt-8 pt-6 border-t border-gray-700 text-center text-gray-400">
             <p>&copy; <?php echo date('Y'); ?> BDPokéCards. Tous droits réservés.</p>
-            <p class="mt-2 text-sm">Pokemon est une marque déposée de Nintendo/Creatures Inc./GAME FREAK inc. Ce site n'est pas affilié à Pokemon Company.</p>
+            <p class="mt-2 text-sm">Pokémon est une marque déposée de Nintendo/Creatures Inc./GAME FREAK inc. Ce site n'est pas affilié à Pokémon Company.</p>
         </div>
     </div>
 </footer>

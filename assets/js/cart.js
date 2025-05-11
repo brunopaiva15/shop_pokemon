@@ -219,7 +219,7 @@ document.addEventListener("DOMContentLoaded", function () {
                       <i class="fas fa-shopping-cart text-4xl text-gray-400 mb-4"></i>
                       <h2 class="text-2xl font-bold mb-2">Votre panier est vide</h2>
                       <p class="text-gray-600 mb-4">Ajoutez des cartes à votre collection !</p>
-                      <a href="index.php" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+                      <a href="index.php" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition">
                         Parcourir les cartes
                       </a>
                     </div>`;

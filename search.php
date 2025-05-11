@@ -7,6 +7,9 @@ if (!isset($_GET['q']) || empty($_GET['q'])) {
     exit;
 }
 
+// Inclure les fichiers nécessaires
+require_once 'includes/functions.php';
+
 $searchTerm = sanitizeInput($_GET['q']);
 
 // Définir le titre de la page
@@ -109,7 +112,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 <form action="search.php" method="GET" class="flex">
                     <input type="text" name="q" value="<?php echo htmlspecialchars($searchTerm); ?>"
                         class="flex-grow p-2 border border-gray-300 rounded-l-md">
-                    <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-r-md hover:bg-red-700 transition">
+                    <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-r-md hover:bg-gray-900 transition">
                         <i class="fas fa-search"></i>
                     </button>
                 </form>
@@ -187,7 +190,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         </div>
 
         <div class="space-y-2">
-            <button id="apply-filters" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition">
+            <button id="apply-filters" class="w-full bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
                 Appliquer les filtres
             </button>
             <button id="reset-filters" class="w-full bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
@@ -216,7 +219,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
                 <h3 class="text-2xl font-bold mb-2">Aucun résultat trouvé</h3>
                 <p class="text-gray-600 mb-4">Aucune carte ne correspond à votre recherche "<?php echo htmlspecialchars($searchTerm); ?>".</p>
-                <a href="index.php" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+                <a href="index.php" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition">
                     Voir toutes les cartes
                 </a>
             </div>
@@ -240,8 +243,12 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                         <?php echo htmlspecialchars($card['name']); ?>
                                     </a>
                                 </h3>
-                                <span class="condition-badge condition-<?php echo $card['condition']; ?>">
-                                    <?php echo CARD_CONDITIONS[$card['condition']]; ?>
+                                <?php
+                                $cardCondition = isset($card['card_condition']) ? $card['card_condition'] : '';
+                                $conditionName = isset(CARD_CONDITIONS[$cardCondition]) ? CARD_CONDITIONS[$cardCondition] : 'Inconnu';
+                                ?>
+                                <span class="condition-badge condition-<?php echo htmlspecialchars($cardCondition); ?>">
+                                    <?php echo htmlspecialchars($conditionName); ?>
                                 </span>
                             </div>
 
@@ -255,7 +262,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                 <div class="font-bold text-xl text-red-600"><?php echo formatPrice($card['price']); ?></div>
 
                                 <?php if ($card['quantity'] > 0): ?>
-                                    <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition">
+                                    <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
                                         <i class="fas fa-shopping-cart mr-1"></i> Ajouter
                                     </button>
                                 <?php else: ?>
@@ -288,7 +295,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                         for ($i = $startPage; $i <= $endPage; $i++):
                         ?>
                             <a href="<?php echo $paginationUrl . $i; ?>"
-                                class="px-4 py-2 text-sm font-medium <?php echo $i == $page ? 'text-white bg-red-600 hover:bg-red-700' : 'text-gray-700 bg-white hover:bg-gray-100'; ?> border border-gray-300">
+                                class="px-4 py-2 text-sm font-medium <?php echo $i == $page ? 'text-white bg-gray-800 hover:bg-gray-900' : 'text-gray-700 bg-white hover:bg-gray-100'; ?> border border-gray-300">
                                 <?php echo $i; ?>
                             </a>
                         <?php endfor; ?>
