@@ -19,13 +19,13 @@
     font-weight: 600;
 }
 
-.condition-MT { background-color: #10B981; color: white; } /* Mint - vert */
-.condition-NM { background-color: #3B82F6; color: white; } /* Near Mint - bleu */
-.condition-EX { background-color: #8B5CF6; color: white; } /* Excellent - violet */
-.condition-GD { background-color: #F59E0B; color: white; } /* Good - orange */
-.condition-LP { background-color: #F97316; color: white; } /* Light Played - orange foncé */
-.condition-MP { background-color: #EF4444; color: white; } /* Moderately Played - rouge */
-.condition-HP { background-color: #991B1B; color: white; } /* Heavily Played - rouge foncé */
+.condition-MT { background-color: #17a2b8; color: white; } /* Mint - vert */
+.condition-NM { background-color: #3caf56; color: white; } /* Near Mint - bleu */
+.condition-EX { background-color: #82891e; color: white; } /* Excellent - violet */
+.condition-GD { background-color: #ffc107; color: black; } /* Good - orange */
+.condition-LP { background-color: #fd8b2b; color: white; } /* Light Played - orange foncé */
+.condition-MP { background-color: #e56874; color: white; } /* Moderately Played - rouge */
+.condition-HP { background-color: #dc3545; color: white; } /* Heavily Played - rouge foncé */
 
 /* Effet de zoom sur l'image des cartes lors du survol */
 .card-image-zoom {

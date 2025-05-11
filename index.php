@@ -122,8 +122,26 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 
 <!-- Bandeau pour dire que toutes les cartes sont livrées avec un sleeve -->
 <div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-6">
-    <i class="fas fa-info-circle mr-2"></i>
-    Toutes les cartes sont livrées dans une sleeve de protection ! Pour les cartes de plus de 2.00 CHF, un toploader est également inclus.
+    <div class="flex flex-wrap justify-between items-center">
+        <div>
+            <i class="fas fa-info-circle mr-2"></i>
+            Toutes les cartes sont livrées dans une sleeve de protection ! Pour les cartes de plus de 2.00 CHF, un toploader est également inclus.
+        </div>
+        <button id="show-condition-guide" class="mt-2 sm:mt-0 text-blue-600 hover:text-blue-800 underline">
+            <i class="fas fa-question-circle mr-1"></i> Guide des états de cartes (<small>MT, NM...</small>)
+        </button>
+    </div>
+</div>
+
+<!-- Modal pour afficher le guide des états des cartes -->
+<div id="condition-guide-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-4 max-w-3xl mx-4 relative">
+        <button id="close-condition-guide" class="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        <h3 class="text-xl font-bold mb-4">Guide des états des cartes</h3>
+        <img src="assets/images/Card_Condition_Table_FR.png" alt="Guide des états des cartes" class="w-full">
+    </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -402,6 +420,40 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 window.location.href = window.location.pathname;
             }
         };
+
+        // Gestion de la fenêtre modale pour le guide des états des cartes
+        const showButton = document.getElementById('show-condition-guide');
+        const closeButton = document.getElementById('close-condition-guide');
+        const modal = document.getElementById('condition-guide-modal');
+
+        if (showButton && modal && closeButton) {
+            showButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Empêcher le défilement du fond
+            });
+
+            closeButton.addEventListener('click', function() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = ''; // Réactiver le défilement
+            });
+
+            // Fermer également en cliquant en dehors de l'image
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // Fermer avec la touche Echap
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
     });
 </script>
 

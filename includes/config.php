@@ -9,13 +9,13 @@ define('ADMIN_EMAIL', 'bvergastapaiva@gmail.com');
 
 // États des cartes
 define('CARD_CONDITIONS', [
-    'MT' => 'Mint',
-    'NM' => 'Near Mint',
-    'EX' => 'Excellent',
-    'GD' => 'Good',
-    'LP' => 'Light Played',
-    'PL' => 'Played',
-    'PO' => 'Poor'
+    'MT' => 'MT',
+    'NM' => 'NM',
+    'EX' => 'EX',
+    'GD' => 'GD',
+    'LP' => 'LP',
+    'PL' => 'PL',
+    'PO' => 'PO'
 ]);
 
 // Raretés des cartes
