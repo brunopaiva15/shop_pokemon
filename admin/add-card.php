@@ -198,12 +198,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div>
                     <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Prix *</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <div class="absolute inset-y-0 right-2 pl-3 flex items-center pointer-events-none">
                             <span class="text-gray-500 sm:text-sm">CHF</span>
                         </div>
                         <input type="number" id="price" name="price" step="0.01" min="0" required
                             value="<?= isset($_POST['price']) ? htmlspecialchars($_POST['price']) : '' ?>"
-                            class="w-full pl-7 p-2 border border-gray-300 rounded-md">
+                            class="w-full p-2 border border-gray-300 rounded-md">
                     </div>
                 </div>
 
