@@ -52,6 +52,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'La quantité ne peut pas être négative';
     }
 
+    // Vérifier si la carte existe déjà
+    if (empty($errors)) {
+        if (cardExists($seriesId, $cardNumber, $variant)) {
+            $errors[] = 'Une carte avec cette série, ce numéro et cette variante existe déjà';
+        }
+    }
+
     // Construction automatique de l'image
     if (empty($errors)) {
         $series = getSeriesById($seriesId);
