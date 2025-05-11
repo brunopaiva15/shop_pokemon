@@ -53,14 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Vérifier si la carte existe déjà
+    $existingCard = null;
     if (empty($errors)) {
-        if (cardExists($seriesId, $cardNumber, $variant)) {
-            $errors[] = 'Une carte avec cette série, ce numéro et cette variante existe déjà';
+        $existingCard = cardExists($seriesId, $cardNumber, $variant);
+        if ($existingCard) {
+            // Ne pas ajouter d'erreur, car nous allons proposer d'augmenter le stock à la place
+            // $errors[] = 'Une carte avec cette série, ce numéro et cette variante existe déjà';
         }
     }
 
-    // Construction automatique de l'image
-    if (empty($errors)) {
+    // Construction automatique de l'image (uniquement si la carte n'existe pas déjà)
+    if (empty($errors) && !$existingCard) {
         $series = getSeriesById($seriesId);
         if (!$series) {
             $errors[] = 'Série invalide';
@@ -78,8 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Si aucune erreur, ajouter la carte
-    if (empty($errors)) {
+    // Si aucune erreur et que la carte n'existe pas déjà, ajouter la carte
+    if (empty($errors) && !$existingCard) {
         if (addCard($seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $variant, $description)) {
             $success = true;
             // Message flash
@@ -233,10 +236,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </button>
         </div>
     </form>
+    <!-- Formulaire pour mettre à jour le stock si la carte existe déjà -->
+    <div id="update-stock-form" class="hidden bg-blue-50 border border-blue-200 p-4 rounded-md mt-4">
+        <h3 class="text-lg font-semibold text-blue-800 mb-2">Cette carte existe déjà</h3>
+        <p class="mb-4">Une carte avec ces caractéristiques existe déjà dans votre stock. Voulez-vous augmenter sa quantité ?</p>
+
+        <form method="POST" action="update-card-stock.php" class="flex items-end space-x-4">
+            <input type="hidden" id="existing_card_id" name="card_id" value="">
+
+            <div>
+                <label for="current_stock" class="block text-sm font-medium text-gray-700 mb-1">Stock actuel</label>
+                <input type="number" id="current_stock" class="w-24 p-2 border border-gray-300 rounded-md bg-gray-100" readonly>
+            </div>
+
+            <div>
+                <label for="add_quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantité à ajouter</label>
+                <input type="number" id="add_quantity" name="add_quantity" min="1" value="1" class="w-24 p-2 border border-gray-300 rounded-md">
+            </div>
+
+            <div>
+                <label for="new_stock" class="block text-sm font-medium text-gray-700 mb-1">Nouveau stock</label>
+                <input type="number" id="new_stock" class="w-24 p-2 border border-gray-300 rounded-md bg-gray-100" readonly>
+            </div>
+
+            <div class="flex space-x-2">
+                <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
+                    <i class="fas fa-plus mr-1"></i> Mettre à jour le stock
+                </button>
+
+                <button type="button" id="cancel-update" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Prévisualisation de l'image - Code original
         const serieSelect = document.getElementById('series_id');
         const cardNumInput = document.getElementById('card_number');
         const previewImg = document.getElementById('preview_img');
@@ -254,6 +292,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         serieSelect.addEventListener('change', updatePreview);
         cardNumInput.addEventListener('input', updatePreview);
+
+        // Gestion du formulaire de mise à jour de stock - Nouveau code
+        const updateStockForm = document.getElementById('update-stock-form');
+        const existingCardIdInput = document.getElementById('existing_card_id');
+        const currentStockInput = document.getElementById('current_stock');
+        const addQuantityInput = document.getElementById('add_quantity');
+        const newStockInput = document.getElementById('new_stock');
+        const cancelUpdateBtn = document.getElementById('cancel-update');
+
+        // S'assurer que tous les éléments existent avant d'ajouter des écouteurs d'événements
+        if (updateStockForm && addQuantityInput && newStockInput && cancelUpdateBtn) {
+            // Mettre à jour le nouveau stock lorsque la quantité à ajouter change
+            addQuantityInput.addEventListener('input', function() {
+                const currentStock = parseInt(currentStockInput.value) || 0;
+                const addQuantity = parseInt(addQuantityInput.value) || 0;
+                newStockInput.value = currentStock + addQuantity;
+            });
+
+            // Masquer le formulaire lorsqu'on clique sur Annuler
+            cancelUpdateBtn.addEventListener('click', function() {
+                updateStockForm.classList.add('hidden');
+            });
+        }
+
+        // Si une erreur de carte existante est détectée via PHP, afficher le formulaire
+        <?php if (isset($existingCard) && $existingCard): ?>
+            // S'assurer que tous les éléments existent
+            if (updateStockForm && existingCardIdInput && currentStockInput && newStockInput) {
+                // Afficher le formulaire de mise à jour du stock
+                updateStockForm.classList.remove('hidden');
+
+                // Remplir les informations de la carte existante
+                existingCardIdInput.value = "<?= $existingCard['id'] ?>";
+                currentStockInput.value = "<?= $existingCard['quantity'] ?>";
+
+                // Calculer le nouveau stock
+                if (addQuantityInput) {
+                    newStockInput.value = parseInt(currentStockInput.value) + parseInt(addQuantityInput.value);
+                }
+
+                // Faire défiler jusqu'au formulaire
+                updateStockForm.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        <?php endif; ?>
     });
 </script>
 

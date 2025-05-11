@@ -99,11 +99,11 @@ function cardExists($seriesId, $cardNumber, $variant)
 {
     $conn = getDbConnection();
     $stmt = $conn->prepare("
-        SELECT COUNT(*) FROM cards 
+        SELECT * FROM cards 
         WHERE series_id = ? AND card_number = ? AND variant = ?
     ");
     $stmt->execute([$seriesId, $cardNumber, $variant]);
-    return $stmt->fetchColumn() > 0;
+    return $stmt->fetch();
 }
 
 function getCardById($id)
