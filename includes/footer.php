@@ -5,7 +5,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
                 <h3 class="text-xl font-bold mb-4">BDPokéCards</h3>
-                <p class="text-gray-300">Votre boutique spécialisée en cartes Pokémon d'occasion en excellent état.</p>
+                <p class="text-gray-300">Votre boutique spécialisée en cartes Pokémon d’occasion en excellent état, directement sorties du booster et protégées sous sleeve dès l’ouverture.</p>
             </div>
 
             <div>
