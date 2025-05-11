@@ -50,9 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Si aucune erreur, créer la commande
     if (empty($errors)) {
         $conn = getDbConnection();
-        $conn->beginTransaction();
 
         try {
+            // Nous ne démarrons PAS de transaction ici, car createOrder() en démarre une
+
             // Créer la commande
             $orderId = createOrder($customerName, $customerEmail, $customerAddress, $paymentMethod, $cartTotal);
 
@@ -72,13 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Vider le panier
                 clearCart();
 
-                $conn->commit();
                 $success = true;
             } else {
                 throw new Exception('Erreur lors de la création de la commande');
             }
         } catch (Exception $e) {
-            $conn->rollBack();
             $errors[] = 'Une erreur est survenue : ' . $e->getMessage();
         }
     }
@@ -152,10 +151,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </label>
 
                             <label class="flex items-center">
-                                <input type="radio" name="payment_method" value="paypal"
-                                    <?php echo (isset($_POST['payment_method']) && $_POST['payment_method'] === 'paypal') ? 'checked' : ''; ?>
+                                <input type="radio" name="payment_method" value="twint"
+                                    <?php echo (isset($_POST['payment_method']) && $_POST['payment_method'] === 'twint') ? 'checked' : ''; ?>
                                     class="mr-2">
-                                <span>PayPal</span>
+                                <span>TWINT</span>
                             </label>
 
                             <label class="flex items-center">
@@ -194,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="flex-grow">
                                         <div class="font-medium"><?php echo htmlspecialchars($item['name']); ?></div>
                                         <div class="text-sm text-gray-500">
-                                            <?php echo CARD_CONDITIONS[$item['condition']]; ?> |
+                                            <?php echo isset(CARD_CONDITIONS[$item['card_condition']]) ? CARD_CONDITIONS[$item['card_condition']] : 'Non spécifié'; ?> |
                                             <?php echo htmlspecialchars($item['card_number']); ?>
                                         </div>
                                     </div>

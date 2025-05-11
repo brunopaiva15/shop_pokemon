@@ -45,7 +45,7 @@ $pageTitle = 'Connexion';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?> - Administration Pokemon Shop</title>
+    <title><?php echo $pageTitle; ?> - Administration BDPokéCards</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome pour les icônes -->
@@ -57,7 +57,7 @@ $pageTitle = 'Connexion';
         <div class="bg-gray-800 text-white py-4 px-6">
             <div class="flex items-center justify-center">
                 <i class="fas fa-cog text-2xl mr-2"></i>
-                <h2 class="text-xl font-bold">Administration Pokemon Shop</h2>
+                <h2 class="text-xl font-bold">Administration BDPokéCards</h2>
             </div>
         </div>
 

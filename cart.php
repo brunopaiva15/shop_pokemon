@@ -54,15 +54,15 @@ $cartTotal = getCartTotal();
                                             <?php echo htmlspecialchars($item['name']); ?>
                                         </a>
                                         <div class="text-xs text-gray-500">
-                                            Série: <?php echo htmlspecialchars($item['series_name']); ?><br>
+                                            Série: <?php echo isset($item['series_name']) ? htmlspecialchars($item['series_name']) : 'Non spécifiée'; ?><br>
                                             N°: <?php echo htmlspecialchars($item['card_number']); ?>
                                         </div>
                                     </div>
                                 </div>
                             </td>
                             <td class="py-4 px-6 text-center">
-                                <span class="condition-badge condition-<?php echo $item['condition']; ?>">
-                                    <?php echo CARD_CONDITIONS[$item['condition']]; ?>
+                                <span class="condition-badge condition-<?php echo $item['card_condition']; ?>">
+                                    <?php echo isset(CARD_CONDITIONS[$item['card_condition']]) ? CARD_CONDITIONS[$item['card_condition']] : 'Non spécifié'; ?>
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-center">

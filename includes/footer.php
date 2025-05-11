@@ -4,7 +4,7 @@
     <div class="container mx-auto px-4">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-                <h3 class="text-xl font-bold mb-4">Pokemon Shop</h3>
+                <h3 class="text-xl font-bold mb-4">BDPokéCards</h3>
                 <p class="text-gray-300">Votre boutique spécialisée en cartes Pokémon d'occasion en excellent état.</p>
             </div>
 
@@ -27,7 +27,7 @@
         </div>
 
         <div class="mt-8 pt-6 border-t border-gray-700 text-center text-gray-400">
-            <p>&copy; <?php echo date('Y'); ?> Pokemon Shop. Tous droits réservés.</p>
+            <p>&copy; <?php echo date('Y'); ?> BDPokéCards. Tous droits réservés.</p>
             <p class="mt-2 text-sm">Pokemon est une marque déposée de Nintendo/Creatures Inc./GAME FREAK inc. Ce site n'est pas affilié à Pokemon Company.</p>
         </div>
     </div>

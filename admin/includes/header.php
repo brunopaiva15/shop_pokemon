@@ -15,7 +15,7 @@ if (!isUserLoggedIn() || !isAdmin()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($pageTitle) ? $pageTitle . ' - ' : ''; ?>Administration Pokemon Shop</title>
+    <title><?php echo isset($pageTitle) ? $pageTitle . ' - ' : ''; ?>Administration BDPokéCards</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome pour les icônes -->

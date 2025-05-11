@@ -5,7 +5,7 @@ define('DB_USER', 'pokemon_shop'); // À modifier en production
 define('DB_PASS', '26Stvi13!'); // À modifier en production
 define('DB_NAME', 'pokemon_shop');
 define('SITE_URL', 'http://localhost/pokemon'); // À modifier en production
-define('ADMIN_EMAIL', 'mail@mail.com');
+define('ADMIN_EMAIL', 'bvergastapaiva@gmail.com');
 
 // États des cartes
 define('CARD_CONDITIONS', [

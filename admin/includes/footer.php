@@ -3,7 +3,7 @@
 
 <footer class="bg-gray-800 text-white py-4">
     <div class="container mx-auto px-4 text-center">
-        <p>&copy; <?php echo date('Y'); ?> Pokemon Shop - Administration</p>
+        <p>&copy; <?php echo date('Y'); ?> BDPokéCards - Administration</p>
     </div>
 </footer>
 

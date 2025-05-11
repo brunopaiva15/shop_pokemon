@@ -6,7 +6,7 @@ $pageTitle = 'Gestion des séries';
 
 // Définir le bouton d'action
 $actionButton = [
-    'url' => 'add-series.php',
+    'url'  => 'add-series.php',
     'icon' => 'fas fa-plus',
     'text' => 'Ajouter une série'
 ];
@@ -15,13 +15,13 @@ $actionButton = [
 require_once 'includes/header.php';
 
 // Récupérer les séries avec le nombre de cartes associées
-$conn = getDbConnection();
-$query = "SELECT s.*, COUNT(c.id) as card_count 
-          FROM series s 
-          LEFT JOIN cards c ON s.id = c.series_id 
-          GROUP BY s.id 
+$conn  = getDbConnection();
+$query = "SELECT s.*, COUNT(c.id) as card_count
+          FROM series s
+          LEFT JOIN cards c ON s.id = c.series_id
+          GROUP BY s.id
           ORDER BY s.name ASC";
-$stmt = $conn->query($query);
+$stmt  = $conn->query($query);
 $series = $stmt->fetchAll();
 ?>
 
@@ -54,22 +54,29 @@ $series = $stmt->fetchAll();
                     <?php foreach ($series as $s): ?>
                         <tr>
                             <td class="px-4 py-2 whitespace-nowrap">
-                                <?php if ($s['logo_url']): ?>
+                                <?php
+                                if (!empty($s['logo_url'])) {
+                                    // Si c'est une URL complète (http:// ou https://), on l'utilise telle quelle
+                                    if (preg_match('#^https?://#i', $s['logo_url'])) {
+                                        $imgSrc = $s['logo_url'];
+                                    } else {
+                                        // sinon, on concatène avec SITE_URL
+                                        $imgSrc = SITE_URL . '/' . ltrim($s['logo_url'], '/');
+                                    }
+                                ?>
                                     <div class="w-12 h-12 bg-gray-100 rounded-md overflow-hidden">
-                                        <img src="<?php echo SITE_URL . '/' . $s['logo_url']; ?>"
-                                            alt="<?php echo htmlspecialchars($s['name']); ?>"
+                                        <img src="<?php echo htmlspecialchars($imgSrc, ENT_QUOTES, 'UTF-8'); ?>"
+                                            alt="Logo de <?php echo htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8'); ?>"
                                             class="w-full h-full object-contain">
                                     </div>
-                                <?php else: ?>
+                                <?php } else { ?>
                                     <div class="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
                                         <i class="fas fa-layer-group text-gray-400"></i>
                                     </div>
-                                <?php endif; ?>
+                                <?php } ?>
                             </td>
-                            <td class="px-4 py-2 whitespace-nowrap font-medium"><?php echo htmlspecialchars($s['name']); ?></td>
-                            <td class="px-4 py-2 whitespace-nowrap">
-                                <?php echo $s['release_date'] ? date('d/m/Y', strtotime($s['release_date'])) : '-'; ?>
-                            </td>
+                            <td class="px-4 py-2 whitespace-nowrap font-medium"><?php echo htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="px-4 py-2 whitespace-nowrap"><?php echo $s['release_date'] ? date('d/m/Y', strtotime($s['release_date'])) : '-'; ?></td>
                             <td class="px-4 py-2 whitespace-nowrap">
                                 <a href="cards.php?series=<?php echo $s['id']; ?>" class="text-blue-600 hover:underline">
                                     <?php echo $s['card_count']; ?> carte<?php echo $s['card_count'] > 1 ? 's' : ''; ?>

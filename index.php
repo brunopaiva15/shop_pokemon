@@ -23,15 +23,21 @@ $priceMax = isset($_GET['price_max']) && is_numeric($_GET['price_max']) ? (float
 
 // Déterminer le tri
 $sortOptions = [
-    'newest' => ['created_at', 'DESC'],
-    'oldest' => ['created_at', 'ASC'],
-    'price_low' => ['price', 'ASC'],
-    'price_high' => ['price', 'DESC'],
-    'name_asc' => ['name', 'ASC'],
-    'name_desc' => ['name', 'DESC']
+    'number_asc'  => ['card_number', 'ASC'],   // ← nouveau
+    'number_desc' => ['card_number', 'DESC'],  // ← nouveau
+    'newest'      => ['created_at',   'DESC'],
+    'oldest'      => ['created_at',   'ASC'],
+    'price_low'   => ['price',        'ASC'],
+    'price_high'  => ['price',        'DESC'],
+    'name_asc'    => ['name',         'ASC'],
+    'name_desc'   => ['name',         'DESC']
 ];
 
-$sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions) ? $_GET['sort'] : 'newest';
+// Définir 'number_asc' comme tri par défaut
+$sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions)
+    ? $_GET['sort']
+    : 'number_asc';
+
 list($sortBy, $sortOrder) = $sortOptions[$sort];
 
 // Inclure l'en-tête
@@ -95,6 +101,12 @@ $paginationParams = $_GET;
 unset($paginationParams['page']); // Supprimer le paramètre de page existant
 $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 ?>
+
+<!-- Bandeau pour dire que toutes les cartes sont livrées avec un sleeve -->
+<div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-6">
+    <i class="fas fa-info-circle mr-2"></i>
+    Toutes les cartes sont livrées dans une sleeve de protection ! Pour les cartes de plus de 2.00 CHF, un toploader est également inclus.
+</div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
     <!-- Sidebar avec filtres -->
@@ -173,12 +185,14 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             <h3 class="filter-title">Trier par</h3>
             <div class="filter-content">
                 <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md">
-                    <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Plus récent</option>
-                    <option value="oldest" <?php echo $sort == 'oldest' ? 'selected' : ''; ?>>Plus ancien</option>
-                    <option value="price_low" <?php echo $sort == 'price_low' ? 'selected' : ''; ?>>Prix croissant</option>
-                    <option value="price_high" <?php echo $sort == 'price_high' ? 'selected' : ''; ?>>Prix décroissant</option>
-                    <option value="name_asc" <?php echo $sort == 'name_asc' ? 'selected' : ''; ?>>Nom (A-Z)</option>
-                    <option value="name_desc" <?php echo $sort == 'name_desc' ? 'selected' : ''; ?>>Nom (Z-A)</option>
+                    <option value="number_asc" <?= $sort == 'number_asc'  ? 'selected' : '' ?>>N° croissant</option>
+                    <option value="number_desc" <?= $sort == 'number_desc' ? 'selected' : '' ?>>N° décroissant</option>
+                    <option value="newest" <?= $sort == 'newest'      ? 'selected' : '' ?>>Plus récent</option>
+                    <option value="oldest" <?= $sort == 'oldest'      ? 'selected' : '' ?>>Plus ancien</option>
+                    <option value="price_low" <?= $sort == 'price_low'   ? 'selected' : '' ?>>Prix croissant</option>
+                    <option value="price_high" <?= $sort == 'price_high'  ? 'selected' : '' ?>>Prix décroissant</option>
+                    <option value="name_asc" <?= $sort == 'name_asc'    ? 'selected' : '' ?>>Nom (A-Z)</option>
+                    <option value="name_desc" <?= $sort == 'name_desc'   ? 'selected' : '' ?>>Nom (Z-A)</option>
                 </select>
             </div>
         </div>

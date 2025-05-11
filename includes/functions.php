@@ -18,18 +18,28 @@ function getSeriesById($id)
     return $stmt->fetch();
 }
 
-function addSeries($name, $releaseDate, $logoUrl = null)
+function addSeries($name, $code, $releaseDate, $logoUrl = null)
 {
     $conn = getDbConnection();
-    $stmt = $conn->prepare("INSERT INTO series (name, release_date, logo_url) VALUES (?, ?, ?)");
-    return $stmt->execute([$name, $releaseDate, $logoUrl]);
+    $stmt = $conn->prepare("
+        INSERT INTO series (name, code, release_date, logo_url)
+        VALUES (?,    ?,    ?,            ?)
+    ");
+    return $stmt->execute([$name, $code, $releaseDate, $logoUrl]);
 }
 
-function updateSeries($id, $name, $releaseDate, $logoUrl = null)
+function updateSeries($id, $name, $code, $releaseDate, $logoUrl = null)
 {
     $conn = getDbConnection();
-    $stmt = $conn->prepare("UPDATE series SET name = ?, release_date = ?, logo_url = ? WHERE id = ?");
-    return $stmt->execute([$name, $releaseDate, $logoUrl, $id]);
+    $stmt = $conn->prepare("
+        UPDATE series
+           SET name        = ?,
+               code        = ?,
+               release_date= ?,
+               logo_url    = ?
+         WHERE id          = ?
+    ");
+    return $stmt->execute([$name, $code, $releaseDate, $logoUrl, $id]);
 }
 
 function deleteSeries($id)
@@ -156,22 +166,44 @@ function countCards($seriesId = null, $condition = null)
 }
 
 // Fonctions pour les commandes
-function createOrder($customerName, $customerEmail, $customerAddress, $paymentMethod, $totalAmount)
-{
+function createOrder(
+    $customerName,
+    $customerEmail,
+    $customerAddress,
+    $paymentMethod,
+    $totalAmount
+) {
     $conn = getDbConnection();
-    $conn->beginTransaction();
 
+    // Vérifier s'il y a déjà une transaction active
     try {
+        $transactionActive = false;
+
+        // Tenter de démarrer une transaction
+        try {
+            $conn->beginTransaction();
+        } catch (PDOException $e) {
+            // Si une exception est levée, c'est qu'une transaction est déjà active
+            $transactionActive = true;
+        }
+
         $stmt = $conn->prepare("INSERT INTO orders (customer_name, customer_email, customer_address, payment_method, total_amount) 
-                               VALUES (?, ?, ?, ?, ?)");
+                              VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$customerName, $customerEmail, $customerAddress, $paymentMethod, $totalAmount]);
         $orderId = $conn->lastInsertId();
 
-        $conn->commit();
+        // Ne faire un commit que si nous avons démarré la transaction
+        if (!$transactionActive) {
+            $conn->commit();
+        }
+
         return $orderId;
     } catch (Exception $e) {
-        $conn->rollBack();
-        return false;
+        // Ne faire un rollback que si nous avons démarré la transaction
+        if (!$transactionActive) {
+            $conn->rollBack();
+        }
+        throw $e;
     }
 }
 
@@ -305,7 +337,11 @@ function getCartItems()
     $cardIds = array_keys($_SESSION['cart']);
     $placeholders = implode(',', array_fill(0, count($cardIds), '?'));
 
-    $stmt = $conn->prepare("SELECT * FROM cards WHERE id IN ($placeholders)");
+    // Modifié pour récupérer également les informations de série
+    $stmt = $conn->prepare("SELECT c.*, s.name as series_name 
+                           FROM cards c 
+                           LEFT JOIN series s ON c.series_id = s.id 
+                           WHERE c.id IN ($placeholders)");
     $stmt->execute($cardIds);
     $cards = $stmt->fetchAll();
 
@@ -313,6 +349,8 @@ function getCartItems()
     foreach ($cards as $card) {
         $card['cart_quantity'] = $_SESSION['cart'][$card['id']];
         $card['subtotal'] = $card['price'] * $card['cart_quantity'];
+        // Assurez-vous que l'état est correctement mappé (card_condition au lieu de condition)
+        $card['condition'] = $card['card_condition'];
         $cartItems[] = $card;
     }
 
@@ -381,7 +419,7 @@ function sendOrderEmail($orderId)
     $order = getOrderById($orderId);
     $items = getOrderItems($orderId);
 
-    $subject = "Nouvelle commande #$orderId - Pokemon Shop";
+    $subject = "Nouvelle commande #$orderId - BDPokéCards";
 
     $message = "<html><body>";
     $message .= "<h1>Nouvelle commande #$orderId</h1>";
