@@ -95,6 +95,63 @@ function getAllCards($limit = null, $offset = 0, $seriesId = null, $condition = 
     return $stmt->fetchAll();
 }
 
+function countAllCards($seriesId = null, $condition = null) {
+    $conn = getDbConnection();
+    
+    // Construire la requête de base
+    $query = "SELECT COUNT(*) as total FROM cards c WHERE 1=1";
+    $params = [];
+    
+    // Ajouter les conditions de filtrage
+    if ($seriesId) {
+        $query .= " AND c.series_id = ?";
+        $params[] = $seriesId;
+    }
+    
+    if ($condition) {
+        $query .= " AND c.card_condition = ?";
+        $params[] = $condition;
+    }
+    
+    // Exécuter la requête
+    $stmt = $conn->prepare($query);
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+    
+    return (int)$result['total'];
+}
+
+function getAllCardsWithoutPagination($seriesId = null, $condition = null, $sortBy = 'created_at', $sortOrder = 'DESC') {
+    $conn = getDbConnection();
+    
+    // Construire la requête de base
+    $query = "SELECT c.*, s.name as series_name 
+              FROM cards c 
+              LEFT JOIN series s ON c.series_id = s.id 
+              WHERE 1=1";
+    $params = [];
+    
+    // Ajouter les conditions de filtrage
+    if ($seriesId) {
+        $query .= " AND c.series_id = ?";
+        $params[] = $seriesId;
+    }
+    
+    if ($condition) {
+        $query .= " AND c.card_condition = ?";
+        $params[] = $condition;
+    }
+    
+    // Ajouter le tri
+    $query .= " ORDER BY c.$sortBy $sortOrder";
+    
+    // Exécuter la requête
+    $stmt = $conn->prepare($query);
+    $stmt->execute($params);
+    
+    return $stmt->fetchAll();
+}
+
 function cardExists($seriesId, $cardNumber, $variant)
 {
     $conn = getDbConnection();
