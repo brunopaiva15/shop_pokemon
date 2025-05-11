@@ -17,3 +17,15 @@ define('CARD_CONDITIONS', [
     'PL' => 'Played',
     'PO' => 'Poor'
 ]);
+
+// Raretés des cartes
+define('CARD_RARITIES', [
+    'C' => 'Commune (●)',
+    'UC' => 'Peu Commune (◆)',
+    'R' => 'Rare (★)',
+    'DR' => 'Double Rare / EX (★★)',
+    'IR' => 'Illustration Rare / AR (★)',
+    'UR' => 'Ultra Rare / Full Art (★★)',
+    'SAR' => 'Illustration Rare Spéciale / Alternative (★★)',
+    'HR' => 'Hyper Rare / Gold (★★★)'
+]);

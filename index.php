@@ -1,6 +1,9 @@
 <?php
 // index.php
 
+// Inclure le fichier de fonctions explicitement
+require_once 'includes/functions.php';
+
 // Définir le titre de la page
 $pageTitle = 'Accueil';
 
@@ -14,6 +17,7 @@ $offset = ($page - 1) * $perPage;
 
 $seriesId = isset($_GET['series']) ? (int)$_GET['series'] : null;
 $condition = isset($_GET['condition']) ? $_GET['condition'] : null;
+$rarity = isset($_GET['rarity']) ? $_GET['rarity'] : null;
 $priceMin = isset($_GET['price_min']) && is_numeric($_GET['price_min']) ? (float)$_GET['price_min'] : null;
 $priceMax = isset($_GET['price_max']) && is_numeric($_GET['price_max']) ? (float)$_GET['price_max'] : null;
 
@@ -45,8 +49,45 @@ if ($currentSeries) {
 // Récupérer les cartes filtrées
 $cards = getAllCards($perPage, $offset, $seriesId, $condition, $sortBy, $sortOrder);
 
+// Filtrer par rareté si spécifiée
+if ($rarity) {
+    $filteredCards = [];
+    foreach ($cards as $card) {
+        if ($card['rarity'] === $rarity) {
+            $filteredCards[] = $card;
+        }
+    }
+    $cards = $filteredCards;
+}
+
+// Filtrer par prix si spécifié
+if ($priceMin !== null || $priceMax !== null) {
+    $filteredCards = [];
+    foreach ($cards as $card) {
+        $price = (float)$card['price'];
+        $priceOk = true;
+
+        if ($priceMin !== null && $price < $priceMin) {
+            $priceOk = false;
+        }
+
+        if ($priceMax !== null && $price > $priceMax) {
+            $priceOk = false;
+        }
+
+        if ($priceOk) {
+            $filteredCards[] = $card;
+        }
+    }
+    $cards = $filteredCards;
+}
+
 // Compter le nombre total de cartes qui correspondent aux filtres
-$totalCards = countCards($seriesId, $condition);
+$totalCards = count($cards);
+
+// Paginer les résultats
+$cards = array_slice($cards, $offset, $perPage);
+
 $totalPages = ceil($totalCards / $perPage);
 
 // Générer les paramètres d'URL pour la pagination
@@ -66,6 +107,20 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                     <?php foreach ($allSeries as $series): ?>
                         <option value="<?php echo $series['id']; ?>" <?php echo $seriesId == $series['id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($series['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-container mb-6">
+            <h3 class="filter-title">Filtrer par rareté</h3>
+            <div class="filter-content">
+                <select id="rarity-filter" class="w-full p-2 border border-gray-300 rounded-md">
+                    <option value="">Toutes les raretés</option>
+                    <?php foreach (CARD_RARITIES as $code => $name): ?>
+                        <option value="<?php echo $code; ?>" <?php echo $rarity == $code ? 'selected' : ''; ?>>
+                            <?php echo $name; ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -194,7 +249,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                             <div class="text-sm text-gray-500 mb-3">
                                 <div>Série: <?php echo htmlspecialchars($card['series_name']); ?></div>
                                 <div>N°: <?php echo htmlspecialchars($card['card_number']); ?></div>
-                                <div>Rareté: <?php echo htmlspecialchars($card['rarity']); ?></div>
+                                <div>Rareté: <?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></div>
                             </div>
 
                             <div class="flex justify-between items-center">
@@ -250,6 +305,55 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+    // Mettre à jour le fichier JavaScript pour inclure le filtre de rareté
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ajout du filtre de rareté
+        const rarityFilter = document.getElementById('rarity-filter');
+
+        // Mise à jour de la fonction applyFilters pour inclure le filtre de rareté
+        window.applyFilters = function() {
+            const params = new URLSearchParams(window.location.search);
+
+            updateUrlParam(params, 'series', document.getElementById('series-filter').value);
+            updateUrlParam(params, 'condition', document.getElementById('condition-filter').value);
+            updateUrlParam(params, 'rarity', rarityFilter.value);
+            updateUrlParam(params, 'sort', document.getElementById('sort-filter').value);
+            updateUrlParam(params, 'price_min', document.getElementById('price-min').value);
+            updateUrlParam(params, 'price_max', document.getElementById('price-max').value);
+
+            // Conserver le paramètre de recherche s'il existe
+            const searchQuery = params.get('q');
+            if (searchQuery) {
+                params.set('q', searchQuery);
+            }
+
+            // Rediriger vers la nouvelle URL
+            window.location.href = window.location.pathname + '?' + params.toString();
+        };
+
+        // Mise à jour de la fonction resetFilters pour réinitialiser le filtre de rareté
+        window.resetFilters = function() {
+            document.getElementById('series-filter').value = '';
+            document.getElementById('condition-filter').value = '';
+            rarityFilter.value = '';
+            document.getElementById('sort-filter').value = 'newest';
+            document.getElementById('price-min').value = '';
+            document.getElementById('price-max').value = '';
+
+            // Conserver uniquement le paramètre de recherche s'il existe
+            const params = new URLSearchParams(window.location.search);
+            const searchQuery = params.get('q');
+
+            if (searchQuery) {
+                window.location.href = window.location.pathname + '?q=' + encodeURIComponent(searchQuery);
+            } else {
+                window.location.href = window.location.pathname;
+            }
+        };
+    });
+</script>
 
 <?php
 // Inclure le pied de page

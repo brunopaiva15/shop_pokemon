@@ -1,6 +1,9 @@
 <?php
 // card-details.php
 
+// Inclure le fichier de fonctions explicitement avant toute utilisation
+require_once 'includes/functions.php';
+
 // Vérifier si l'ID de la carte est fourni
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('Location: index.php');
@@ -48,7 +51,7 @@ require_once 'includes/header.php';
             <div class="mb-6">
                 <p class="text-gray-600">Série: <strong><?php echo htmlspecialchars($card['series_name']); ?></strong></p>
                 <p class="text-gray-600">Numéro: <strong><?php echo htmlspecialchars($card['card_number']); ?></strong></p>
-                <p class="text-gray-600">Rareté: <strong><?php echo htmlspecialchars($card['rarity']); ?></strong></p>
+                <p class="text-gray-600">Rareté: <strong><?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></strong></p>
                 <?php if (!empty($card['description'])): ?>
                     <div class="mt-4">
                         <h3 class="font-semibold mb-2">Description:</h3>
@@ -126,6 +129,10 @@ require_once 'includes/header.php';
                             <span class="condition-badge condition-<?php echo $relatedCard['card_condition']; ?>">
                                 <?php echo CARD_CONDITIONS[$relatedCard['card_condition']]; ?>
                             </span>
+                        </div>
+
+                        <div class="text-sm text-gray-500 mb-3">
+                            <div>Rareté: <?php echo isset(CARD_RARITIES[$relatedCard['rarity']]) ? CARD_RARITIES[$relatedCard['rarity']] : htmlspecialchars($relatedCard['rarity']); ?></div>
                         </div>
 
                         <div class="flex justify-between items-center">

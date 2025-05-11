@@ -1,6 +1,9 @@
 <?php
 // admin/add-card.php
 
+// Inclure les fonctions nécessaires
+require_once '../includes/functions.php';
+
 // Définir le titre de la page
 $pageTitle = 'Ajouter une carte';
 
@@ -36,6 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($condition) || !array_key_exists($condition, CARD_CONDITIONS)) {
         $errors[] = 'L\'état de la carte est obligatoire et doit être valide';
+    }
+
+    if (empty($rarity) || !array_key_exists($rarity, CARD_RARITIES)) {
+        $errors[] = 'La rareté de la carte est obligatoire et doit être valide';
     }
 
     if ($price <= 0) {
@@ -142,10 +149,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div>
-                    <label for="rarity" class="block text-sm font-medium text-gray-700 mb-1">Rareté</label>
-                    <input type="text" id="rarity" name="rarity"
-                        value="<?php echo isset($_POST['rarity']) ? htmlspecialchars($_POST['rarity']) : ''; ?>"
-                        class="w-full p-2 border border-gray-300 rounded-md">
+                    <label for="rarity" class="block text-sm font-medium text-gray-700 mb-1">Rareté *</label>
+                    <select id="rarity" name="rarity" required class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">-- Sélectionner une rareté --</option>
+                        <?php foreach (CARD_RARITIES as $code => $name): ?>
+                            <option value="<?php echo $code; ?>" <?php echo (isset($_POST['rarity']) && $_POST['rarity'] == $code) ? 'selected' : ''; ?>>
+                                <?php echo $name; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
                 <div>

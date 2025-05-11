@@ -1,7 +1,7 @@
 <?php
 // includes/header.php
 session_start();
-require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -46,6 +46,42 @@ require_once __DIR__ . '/functions.php';
                     </a>
                 </div>
             </div>
+
+            <nav class="mt-4">
+                <ul class="flex flex-wrap space-x-6">
+                    <li><a href="<?php echo SITE_URL; ?>" class="hover:text-yellow-300 transition">Accueil</a></li>
+                    <?php
+                    // Afficher les séries dans le menu
+                    $series = getAllSeries();
+                    $seriesCount = count($series);
+                    $maxDisplay = 5; // Nombre maximum de séries à afficher directement
+
+                    for ($i = 0; $i < min($seriesCount, $maxDisplay); $i++):
+                    ?>
+                        <li><a href="<?php echo SITE_URL . '/?series=' . $series[$i]['id']; ?>" class="hover:text-yellow-300 transition">
+                                <?php echo htmlspecialchars($series[$i]['name']); ?>
+                            </a></li>
+                    <?php endfor; ?>
+
+                    <?php if ($seriesCount > $maxDisplay): ?>
+                        <li class="relative group">
+                            <a href="#" class="hover:text-yellow-300 transition">
+                                Plus de séries <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </a>
+                            <div class="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden group-hover:block">
+                                <div class="py-1">
+                                    <?php for ($i = $maxDisplay; $i < $seriesCount; $i++): ?>
+                                        <a href="<?php echo SITE_URL . '/?series=' . $series[$i]['id']; ?>"
+                                            class="block px-4 py-2 text-gray-800 hover:bg-red-500 hover:text-white transition">
+                                            <?php echo htmlspecialchars($series[$i]['name']); ?>
+                                        </a>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
         </div>
     </header>
 

@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Récupérer les éléments du DOM
   const seriesFilter = document.getElementById("series-filter");
   const conditionFilter = document.getElementById("condition-filter");
+  const rarityFilter = document.getElementById("rarity-filter");
   const sortFilter = document.getElementById("sort-filter");
   const priceMinFilter = document.getElementById("price-min");
   const priceMaxFilter = document.getElementById("price-max");
@@ -54,6 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
       "condition",
       conditionFilter ? conditionFilter.value : null
     );
+    updateUrlParam(params, "rarity", rarityFilter ? rarityFilter.value : null);
     updateUrlParam(params, "sort", sortFilter ? sortFilter.value : null);
     updateUrlParam(
       params,
@@ -80,6 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function resetFilters() {
     if (seriesFilter) seriesFilter.value = "";
     if (conditionFilter) conditionFilter.value = "";
+    if (rarityFilter) rarityFilter.value = "";
     if (sortFilter) sortFilter.value = "newest";
     if (priceMinFilter) priceMinFilter.value = "";
     if (priceMaxFilter) priceMaxFilter.value = "";
