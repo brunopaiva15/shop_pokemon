@@ -1,0 +1,130 @@
+/* assets/css/custom.css */
+
+/* Animation de survol pour les cartes */
+.card-hover {
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Badges pour les états des cartes */
+.condition-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.condition-MT { background-color: #10B981; color: white; } /* Mint - vert */
+.condition-NM { background-color: #3B82F6; color: white; } /* Near Mint - bleu */
+.condition-EX { background-color: #8B5CF6; color: white; } /* Excellent - violet */
+.condition-GD { background-color: #F59E0B; color: white; } /* Good - orange */
+.condition-LP { background-color: #F97316; color: white; } /* Light Played - orange foncé */
+.condition-MP { background-color: #EF4444; color: white; } /* Moderately Played - rouge */
+.condition-HP { background-color: #991B1B; color: white; } /* Heavily Played - rouge foncé */
+
+/* Effet de zoom sur l'image des cartes lors du survol */
+.card-image-zoom {
+    overflow: hidden;
+}
+
+.card-image-zoom img {
+    transition: transform 0.3s ease;
+}
+
+.card-image-zoom:hover img {
+    transform: scale(1.05);
+}
+
+/* Animation de notification pour les ajouts au panier */
+@keyframes addToCartPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.add-to-cart-pulse {
+    animation: addToCartPulse 0.5s ease-in-out;
+}
+
+/* Styles pour les sélecteurs de quantité */
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.quantity-selector button {
+    width: 2rem;
+    height: 2rem;
+    background-color: #E5E7EB;
+    color: #374151;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.quantity-selector button:hover {
+    background-color: #D1D5DB;
+}
+
+.quantity-selector input {
+    width: 3rem;
+    height: 2rem;
+    text-align: center;
+    border: 1px solid #E5E7EB;
+    border-left: none;
+    border-right: none;
+}
+
+/* Styles pour les filtres latéraux */
+.filter-container {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filter-title {
+    border-bottom: 1px solid #E5E7EB;
+    padding: 1rem;
+    font-weight: 600;
+}
+
+.filter-content {
+    padding: 1rem;
+}
+
+/* Boutons d'action */
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s;
+}
+
+.action-button.edit {
+    background-color: #3B82F6;
+    color: white;
+}
+
+.action-button.delete {
+    background-color: #EF4444;
+    color: white;
+}
+
+.action-button.view {
+    background-color: #10B981;
+    color: white;
+}
+
+.action-button:hover {
+    opacity: 0.9;
+}

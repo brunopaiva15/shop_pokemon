@@ -1,0 +1,65 @@
+# .htaccess
+
+# Activer le moteur de réécriture
+RewriteEngine On
+
+# Règles de base pour la sécurité
+# Désactiver l'affichage du contenu des répertoires
+Options -Indexes
+
+# Protection des fichiers sensibles
+<FilesMatch "^(\.|wp-config\.php|php\.ini|config\.php)">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# Empêcher l'accès direct aux fichiers PHP dans les répertoires includes et uploads
+RewriteRule ^(includes|uploads)/(.*)\.php$ - [F,L]
+
+# Rediriger www vers non-www (à activer si souhaité)
+# RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
+# RewriteRule ^(.*)$ http://%1/$1 [R=301,L]
+
+# Protection contre les injections XSS
+<IfModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Compression GZIP pour améliorer les performances
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# Mise en cache des ressources statiques
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType text/x-javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+    ExpiresByType application/x-shockwave-flash "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresDefault "access plus 2 days"
+</IfModule>
+
+# Erreurs personnalisées
+ErrorDocument 404 /404.php
+ErrorDocument 403 /403.php
+
+# Règles de réécriture d'URL personnalisées (à adapter si besoin)
+# Example: RewriteRule ^carte/([0-9]+)/?$ card-details.php?id=$1 [L]
