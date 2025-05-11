@@ -17,7 +17,7 @@ $perPage = 20; // Nombre de cartes par page
 $offset = ($page - 1) * $perPage;
 
 $seriesId = isset($_GET['series']) ? (int)$_GET['series'] : null;
-$condition = isset($_GET['condition']) ? $_GET['condition'] : null;
+$condition = isset($_GET['condition']) ? sanitizeInput($_GET['condition']) : null;
 $search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : '';
 
 // Déterminer le tri
@@ -56,7 +56,7 @@ if ($seriesId) {
 }
 
 if ($condition) {
-    $query .= " AND c.condition = ?";
+    $query .= " AND c.card_condition = ?";
     $params[] = $condition;
 }
 
@@ -196,8 +196,8 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                 <td class="px-4 py-2 whitespace-nowrap"><?php echo htmlspecialchars($card['series_name']); ?></td>
                                 <td class="px-4 py-2 whitespace-nowrap"><?php echo htmlspecialchars($card['card_number']); ?></td>
                                 <td class="px-4 py-2 whitespace-nowrap">
-                                    <span class="condition-badge condition-<?php echo $card['condition']; ?>">
-                                        <?php echo CARD_CONDITIONS[$card['condition']]; ?>
+                                    <span class="condition-badge condition-<?php echo $card['card_condition']; ?>">
+                                        <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
                                     </span>
                                 </td>
                                 <td class="px-4 py-2 whitespace-nowrap"><?php echo formatPrice($card['price']); ?></td>

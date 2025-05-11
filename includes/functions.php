@@ -39,7 +39,7 @@ function deleteSeries($id)
     return $stmt->execute([$id]);
 }
 
-// Fonctions pour les cartes
+// Fonctions pour les cartes - Mise à jour avec card_condition au lieu de condition
 function getAllCards($limit = null, $offset = 0, $seriesId = null, $condition = null, $sortBy = 'created_at', $sortOrder = 'DESC')
 {
     $conn = getDbConnection();
@@ -55,7 +55,7 @@ function getAllCards($limit = null, $offset = 0, $seriesId = null, $condition = 
     }
 
     if ($condition) {
-        $query .= " AND c.condition = ?";
+        $query .= " AND c.card_condition = ?";
         $params[] = $condition;
     }
 
@@ -85,7 +85,7 @@ function getCardById($id)
 function addCard($seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl = null, $description = null)
 {
     $conn = getDbConnection();
-    $stmt = $conn->prepare("INSERT INTO cards (series_id, name, card_number, rarity, condition, price, quantity, image_url, description) 
+    $stmt = $conn->prepare("INSERT INTO cards (series_id, name, card_number, rarity, card_condition, price, quantity, image_url, description) 
                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     return $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $description]);
 }
@@ -94,7 +94,7 @@ function updateCard($id, $seriesId, $name, $cardNumber, $rarity, $condition, $pr
 {
     $conn = getDbConnection();
     $stmt = $conn->prepare("UPDATE cards SET series_id = ?, name = ?, card_number = ?, rarity = ?, 
-                           condition = ?, price = ?, quantity = ?, image_url = ?, description = ? 
+                           card_condition = ?, price = ?, quantity = ?, image_url = ?, description = ? 
                            WHERE id = ?");
     return $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $description, $id]);
 }
@@ -145,7 +145,7 @@ function countCards($seriesId = null, $condition = null)
     }
 
     if ($condition) {
-        $query .= " AND condition = ?";
+        $query .= " AND card_condition = ?";
         $params[] = $condition;
     }
 
@@ -351,7 +351,7 @@ function sanitizeInput($input)
 
 function formatPrice($price)
 {
-    return number_format($price, 2, '.', ' ') . ' €';
+    return number_format($price, 2, '.', ' ') . ' CHF';
 }
 
 function generatePageUrl($page, $params = [])

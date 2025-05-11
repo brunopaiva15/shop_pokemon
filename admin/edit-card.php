@@ -192,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <select id="condition" name="condition" required class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">-- Sélectionner un état --</option>
                         <?php foreach (CARD_CONDITIONS as $code => $name): ?>
-                            <option value="<?php echo $code; ?>" <?php echo $card['condition'] == $code ? 'selected' : ''; ?>>
+                            <option value="<?php echo $code; ?>" <?php echo $card['card_condition'] == $code ? 'selected' : ''; ?>>
                                 <?php echo $name; ?>
                             </option>
                         <?php endforeach; ?>
@@ -206,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label for="price" class="block text-sm font-medium text-gray-700 mb-1">Prix *</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">€</span>
+                            <span class="text-gray-500 sm:text-sm">CHF</span>
                         </div>
                         <input type="number" id="price" name="price" step="0.01" min="0" required
                             value="<?php echo htmlspecialchars($card['price']); ?>"

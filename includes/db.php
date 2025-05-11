@@ -34,14 +34,14 @@ function initDatabase()
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
 
-    // Table des cartes
+    // Table des cartes - Changé "condition" en "card_condition" car c'est un mot réservé en SQL
     $conn->exec("CREATE TABLE IF NOT EXISTS cards (
         id INT AUTO_INCREMENT PRIMARY KEY,
         series_id INT,
         name VARCHAR(100) NOT NULL,
         card_number VARCHAR(20) NOT NULL,
         rarity VARCHAR(50),
-        condition VARCHAR(10) NOT NULL,
+        card_condition VARCHAR(10) NOT NULL,
         price DECIMAL(10,2) NOT NULL,
         quantity INT NOT NULL DEFAULT 1,
         image_url VARCHAR(255),

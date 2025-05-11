@@ -151,7 +151,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                     <label for="price-min" class="block text-sm font-medium text-gray-700">Prix minimum</label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">€</span>
+                            <span class="text-gray-500 sm:text-sm">CHF</span>
                         </div>
                         <input type="number" min="0" step="0.01" id="price-min" name="price_min"
                             value="<?php echo $priceMin; ?>"
@@ -162,7 +162,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                     <label for="price-max" class="block text-sm font-medium text-gray-700">Prix maximum</label>
                     <div class="mt-1 relative rounded-md shadow-sm">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="text-gray-500 sm:text-sm">€</span>
+                            <span class="text-gray-500 sm:text-sm">CHF</span>
                         </div>
                         <input type="number" min="0" step="0.01" id="price-max" name="price_max"
                             value="<?php echo $priceMax; ?>"

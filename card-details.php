@@ -40,8 +40,8 @@ require_once 'includes/header.php';
         <div class="md:w-1/2">
             <div class="flex justify-between items-start mb-4">
                 <h1 class="text-3xl font-bold"><?php echo htmlspecialchars($card['name']); ?></h1>
-                <span class="condition-badge condition-<?php echo $card['condition']; ?> text-base">
-                    <?php echo CARD_CONDITIONS[$card['condition']]; ?>
+                <span class="condition-badge condition-<?php echo $card['card_condition']; ?> text-base">
+                    <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
                 </span>
             </div>
 
@@ -123,8 +123,8 @@ require_once 'includes/header.php';
                                     <?php echo htmlspecialchars($relatedCard['name']); ?>
                                 </a>
                             </h3>
-                            <span class="condition-badge condition-<?php echo $relatedCard['condition']; ?>">
-                                <?php echo CARD_CONDITIONS[$relatedCard['condition']]; ?>
+                            <span class="condition-badge condition-<?php echo $relatedCard['card_condition']; ?>">
+                                <?php echo CARD_CONDITIONS[$relatedCard['card_condition']]; ?>
                             </span>
                         </div>
 
