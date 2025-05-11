@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const seriesFilter = document.getElementById("series-filter");
   const conditionFilter = document.getElementById("condition-filter");
   const rarityFilter = document.getElementById("rarity-filter");
+  const variantFilter = document.getElementById("variant-filter"); // Nouveau filtre de variante
   const sortFilter = document.getElementById("sort-filter");
   const priceMinFilter = document.getElementById("price-min");
   const priceMaxFilter = document.getElementById("price-max");
@@ -56,6 +57,11 @@ document.addEventListener("DOMContentLoaded", function () {
       conditionFilter ? conditionFilter.value : null
     );
     updateUrlParam(params, "rarity", rarityFilter ? rarityFilter.value : null);
+    updateUrlParam(
+      params,
+      "variant",
+      variantFilter ? variantFilter.value : null
+    ); // Ajout du filtre de variante
     updateUrlParam(params, "sort", sortFilter ? sortFilter.value : null);
     updateUrlParam(
       params,
@@ -83,6 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (seriesFilter) seriesFilter.value = "";
     if (conditionFilter) conditionFilter.value = "";
     if (rarityFilter) rarityFilter.value = "";
+    if (variantFilter) variantFilter.value = ""; // Réinitialisation du filtre de variante
     if (sortFilter) sortFilter.value = "newest";
     if (priceMinFilter) priceMinFilter.value = "";
     if (priceMaxFilter) priceMaxFilter.value = "";

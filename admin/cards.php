@@ -177,6 +177,8 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Série</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">État</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rareté</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variante</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -200,6 +202,8 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                         <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
                                     </span>
                                 </td>
+                                <td class="px-4 py-2 whitespace-nowrap"><?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></td>
+                                <td class="px-4 py-2 whitespace-nowrap"><?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></td>
                                 <td class="px-4 py-2 whitespace-nowrap"><?php echo formatPrice($card['price']); ?></td>
                                 <td class="px-4 py-2 whitespace-nowrap">
                                     <span class="<?php echo $card['quantity'] == 0 ? 'text-red-600 font-bold' : ($card['quantity'] < 3 ? 'text-yellow-600 font-bold' : 'text-green-600'); ?>">

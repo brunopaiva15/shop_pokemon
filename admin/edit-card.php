@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name        = isset($_POST['name'])        ? sanitizeInput($_POST['name'])             : '';
     $cardNumber  = isset($_POST['card_number']) ? sanitizeInput($_POST['card_number'])      : '';
     $rarity      = isset($_POST['rarity'])      ? sanitizeInput($_POST['rarity'])           : '';
+    $variant     = isset($_POST['variant'])     ? sanitizeInput($_POST['variant'])          : '';
     $condition   = isset($_POST['condition'])   ? sanitizeInput($_POST['condition'])        : '';
     $price       = isset($_POST['price'])       ? (float) $_POST['price']                   : 0;
     $quantity    = isset($_POST['quantity'])    ? (int) $_POST['quantity']                  : 0;
@@ -61,6 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (empty($rarity) || !array_key_exists($rarity, CARD_RARITIES)) {
         $errors[] = 'La rareté de la carte est obligatoire et doit être valide';
+    }
+    if (empty($variant) || !array_key_exists($variant, CARD_VARIANTS)) {
+        $errors[] = 'La variante de la carte est obligatoire et doit être valide';
     }
     if ($price <= 0) {
         $errors[] = 'Le prix doit être supérieur à 0';
@@ -90,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Si aucune erreur, mettre à jour la carte
     if (empty($errors)) {
-        if (updateCard($cardId, $seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $description)) {
+        if (updateCard($cardId, $seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $variant, $description)) {
             $success = true;
             // Mettre à jour l'objet carte
             $card = getCardById($cardId);
@@ -172,6 +176,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div>
+                    <label for="variant" class="block text-sm font-medium text-gray-700 mb-1">Variante *</label>
+                    <select id="variant" name="variant" required class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">-- Sélectionner une variante --</option>
+                        <?php foreach (CARD_VARIANTS as $code => $name): ?>
+                            <option value="<?= $code ?>" <?= ($card['variant'] == $code) ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
                     <label for="condition" class="block text-sm font-medium text-gray-700 mb-1">État *</label>
                     <select id="condition" name="condition" required class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">-- Sélectionner un état --</option>
@@ -243,8 +257,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Ajouter des écouteurs d'événements pour les changements
         serieSelect.addEventListener('change', updatePreview);
         cardNumInput.addEventListener('input', updatePreview);
+
+        // Appeler updatePreview immédiatement pour initialiser l'aperçu
+        updatePreview();
+
+        // Définir directement la source de l'image avec la valeur actuelle
+        // Cette ligne est un filet de sécurité si updatePreview() ne fonctionne pas
+        if (previewImg.src === window.location.href || previewImg.src === '#') {
+            previewImg.src = '<?= $card['image_url'] ?>';
+        }
     });
 </script>
 

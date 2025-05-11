@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name        = isset($_POST['name'])        ? sanitizeInput($_POST['name'])             : '';
     $cardNumber  = isset($_POST['card_number']) ? sanitizeInput($_POST['card_number'])      : '';
     $rarity      = isset($_POST['rarity'])      ? sanitizeInput($_POST['rarity'])           : '';
+    $variant     = isset($_POST['variant'])     ? sanitizeInput($_POST['variant'])          : '';
     $condition   = isset($_POST['condition'])   ? sanitizeInput($_POST['condition'])        : '';
     $price       = isset($_POST['price'])       ? (float) $_POST['price']                   : 0;
     $quantity    = isset($_POST['quantity'])    ? (int) $_POST['quantity']                  : 0;
@@ -40,6 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (empty($rarity) || !array_key_exists($rarity, CARD_RARITIES)) {
         $errors[] = 'La rareté de la carte est obligatoire et doit être valide';
+    }
+    if (empty($variant) || !array_key_exists($variant, CARD_VARIANTS)) {
+        $errors[] = 'La variante de la carte est obligatoire et doit être valide';
     }
     if ($price <= 0) {
         $errors[] = 'Le prix doit être supérieur à 0';
@@ -69,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Si aucune erreur, ajouter la carte
     if (empty($errors)) {
-        if (addCard($seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $description)) {
+        if (addCard($seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $variant, $description)) {
             $success = true;
             // Message flash
             $_SESSION['flash_message'] = 'La carte a été ajoutée avec succès';
@@ -144,6 +148,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php foreach (CARD_RARITIES as $code => $name): ?>
                             <option value="<?= $code ?>"
                                 <?= (isset($_POST['rarity']) && $_POST['rarity'] == $code) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="variant" class="block text-sm font-medium text-gray-700 mb-1">Variante *</label>
+                    <select id="variant" name="variant" required
+                        class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">-- Sélectionner une variante --</option>
+                        <?php foreach (CARD_VARIANTS as $code => $name): ?>
+                            <option value="<?= $code ?>"
+                                <?= (isset($_POST['variant']) && $_POST['variant'] == $code) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($name) ?>
                             </option>
                         <?php endforeach; ?>

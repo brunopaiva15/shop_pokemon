@@ -76,13 +76,6 @@ require_once 'includes/header.php';
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h1 class="text-3xl font-bold"><?php echo htmlspecialchars($card['name']); ?></h1>
-
-                    <?php if ($activeUsers > 0): ?>
-                        <div class="mt-2 text-sm text-orange-600 flex items-center gap-2">
-                            <i class="fas fa-fire text-orange-500"></i>
-                            <?php echo $activeUsers; ?> personne<?php echo $activeUsers > 1 ? 's' : ''; ?> consult<?php echo $activeUsers > 1 ? 'ent' : 'e'; ?> cette carte en ce moment
-                        </div>
-                    <?php endif; ?>
                 </div>
                 <span class="condition-badge condition-<?php echo $card['card_condition']; ?> text-base">
                     <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
@@ -93,6 +86,7 @@ require_once 'includes/header.php';
                 <p class="text-gray-600">Série: <strong><?php echo htmlspecialchars($card['series_name']); ?></strong></p>
                 <p class="text-gray-600">Numéro: <strong><?php echo htmlspecialchars($card['card_number']); ?></strong></p>
                 <p class="text-gray-600">Rareté: <strong><?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></strong></p>
+                <p class="text-gray-600">Variante: <strong><?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></strong></p>
                 <?php if (!empty($card['description'])): ?>
                     <div class="mt-4">
                         <h3 class="font-semibold mb-2">Description:</h3>

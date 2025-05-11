@@ -4,6 +4,12 @@
 // Inclure le fichier de fonctions explicitement
 require_once 'includes/functions.php';
 
+session_start();
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    header('Location: auth.php');
+    exit;
+}
+
 // Définir le titre de la page
 $pageTitle = 'Accueil';
 
@@ -18,6 +24,7 @@ $offset = ($page - 1) * $perPage;
 $seriesId = isset($_GET['series']) ? (int)$_GET['series'] : null;
 $condition = isset($_GET['condition']) ? $_GET['condition'] : null;
 $rarity = isset($_GET['rarity']) ? $_GET['rarity'] : null;
+$variant = isset($_GET['variant']) ? $_GET['variant'] : null;
 $priceMin = isset($_GET['price_min']) && is_numeric($_GET['price_min']) ? (float)$_GET['price_min'] : null;
 $priceMax = isset($_GET['price_max']) && is_numeric($_GET['price_max']) ? (float)$_GET['price_max'] : null;
 
@@ -44,7 +51,7 @@ list($sortBy, $sortOrder) = $sortOptions[$sort];
 require_once 'includes/header.php';
 
 // Récupérer toutes les séries pour les filtres
-$allSeries = getAllSeries();
+$allSeries = getSeriesWithCards();
 
 // Récupérer la série actuelle si elle est spécifiée
 $currentSeries = $seriesId ? getSeriesById($seriesId) : null;
@@ -60,6 +67,17 @@ if ($rarity) {
     $filteredCards = [];
     foreach ($cards as $card) {
         if ($card['rarity'] === $rarity) {
+            $filteredCards[] = $card;
+        }
+    }
+    $cards = $filteredCards;
+}
+
+// Filtrer par variante si spécifiée
+if ($variant) {
+    $filteredCards = [];
+    foreach ($cards as $card) {
+        if ($card['variant'] === $variant) {
             $filteredCards[] = $card;
         }
     }
@@ -132,6 +150,20 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                     <option value="">Toutes les raretés</option>
                     <?php foreach (CARD_RARITIES as $code => $name): ?>
                         <option value="<?php echo $code; ?>" <?php echo $rarity == $code ? 'selected' : ''; ?>>
+                            <?php echo $name; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-container mb-6">
+            <h3 class="filter-title">Filtrer par variante</h3>
+            <div class="filter-content">
+                <select id="variant-filter" class="w-full p-2 border border-gray-300 rounded-md">
+                    <option value="">Toutes les variantes</option>
+                    <?php foreach (CARD_VARIANTS as $code => $name): ?>
+                        <option value="<?php echo $code; ?>" <?php echo isset($_GET['variant']) && $_GET['variant'] == $code ? 'selected' : ''; ?>>
                             <?php echo $name; ?>
                         </option>
                     <?php endforeach; ?>
@@ -274,20 +306,14 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                 <div>Série: <?php echo htmlspecialchars($card['series_name']); ?></div>
                                 <div>N°: <?php echo htmlspecialchars($card['card_number']); ?></div>
                                 <div>Rareté: <?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></div>
+                                <div>Variante: <?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></div>
                             </div>
 
                             <div class="flex justify-between items-center">
                                 <div class="font-bold text-xl text-red-600"><?php echo formatPrice($card['price']); ?></div>
-
-                                <?php if ($card['quantity'] > 0): ?>
-                                    <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
-                                        <i class="fas fa-shopping-cart mr-1"></i> Ajouter
-                                    </button>
-                                <?php else: ?>
-                                    <span class="bg-gray-300 text-gray-600 py-2 px-4 rounded-md">
-                                        Indisponible
-                                    </span>
-                                <?php endif; ?>
+                                <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
+                                    <i class="fas fa-shopping-cart mr-1"></i> Ajouter
+                                </button>
                             </div>
                         </div>
                     </div>

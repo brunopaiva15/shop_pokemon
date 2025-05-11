@@ -18,6 +18,19 @@ function getSeriesById($id)
     return $stmt->fetch();
 }
 
+function getSeriesWithCards()
+{
+    $conn = getDbConnection();
+    $stmt = $conn->query("
+        SELECT DISTINCT s.* 
+        FROM series s
+        INNER JOIN cards c ON s.id = c.series_id
+        WHERE c.quantity > 0
+        ORDER BY s.name ASC
+    ");
+    return $stmt->fetchAll();
+}
+
 function addSeries($name, $code, $releaseDate, $logoUrl = null)
 {
     $conn = getDbConnection();
@@ -56,7 +69,7 @@ function getAllCards($limit = null, $offset = 0, $seriesId = null, $condition = 
 
     $query = "SELECT c.*, s.name as series_name FROM cards c 
               LEFT JOIN series s ON c.series_id = s.id 
-              WHERE 1=1";
+              WHERE c.quantity > 0"; // Ajout de cette condition pour filtrer les cartes en stock
     $params = [];
 
     if ($seriesId) {
@@ -92,21 +105,21 @@ function getCardById($id)
     return $stmt->fetch();
 }
 
-function addCard($seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl = null, $description = null)
+function addCard($seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl = null, $variant = 'normal', $description = null)
 {
     $conn = getDbConnection();
-    $stmt = $conn->prepare("INSERT INTO cards (series_id, name, card_number, rarity, card_condition, price, quantity, image_url, description) 
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    return $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $description]);
+    $stmt = $conn->prepare("INSERT INTO cards (series_id, name, card_number, rarity, card_condition, price, quantity, image_url, variant, description) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    return $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $variant, $description]);
 }
 
-function updateCard($id, $seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl = null, $description = null)
+function updateCard($id, $seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl = null, $variant = 'normal', $description = null)
 {
     $conn = getDbConnection();
     $stmt = $conn->prepare("UPDATE cards SET series_id = ?, name = ?, card_number = ?, rarity = ?, 
-                           card_condition = ?, price = ?, quantity = ?, image_url = ?, description = ? 
+                           card_condition = ?, price = ?, quantity = ?, image_url = ?, variant = ?, description = ? 
                            WHERE id = ?");
-    return $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $description, $id]);
+    return $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $variant, $description, $id]);
 }
 
 function deleteCard($id)
