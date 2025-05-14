@@ -24,8 +24,8 @@
 .condition-EX { background-color: #82891e; color: white; } /* Excellent - violet */
 .condition-GD { background-color: #ffc107; color: black; } /* Good - orange */
 .condition-LP { background-color: #fd8b2b; color: white; } /* Light Played - orange foncé */
-.condition-MP { background-color: #e56874; color: white; } /* Moderately Played - rouge */
-.condition-HP { background-color: #dc3545; color: white; } /* Heavily Played - rouge foncé */
+.condition-PL { background-color: #e56874; color: white; } /* Moderately Played - rouge */
+.condition-PO { background-color: #dc3545; color: white; } /* Heavily Played - rouge foncé */
 
 /* Effet de zoom sur l'image des cartes lors du survol */
 .card-image-zoom {
