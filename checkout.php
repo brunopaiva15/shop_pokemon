@@ -52,19 +52,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn = getDbConnection();
 
         try {
-            // Nous ne démarrons PAS de transaction ici, car createOrder() en démarre une
+            // Démarrer une transaction
+            $conn->beginTransaction();
 
             // Créer la commande
-            $orderId = createOrder($customerName, $customerEmail, $customerAddress, $paymentMethod, $cartTotal);
+            $stmt = $conn->prepare("
+                INSERT INTO orders (customer_name, customer_email, customer_address, payment_method, total_amount) 
+                VALUES (?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([$customerName, $customerEmail, $customerAddress, $paymentMethod, $cartTotal]);
+            $orderId = $conn->lastInsertId();
 
             if ($orderId) {
                 // Ajouter les articles à la commande
                 foreach ($cartItems as $item) {
-                    addOrderItem($orderId, $item['id'], $item['cart_quantity'], $item['price']);
+                    // Récupérer les informations spécifiques à l'état de la carte
+                    $stmt = $conn->prepare("
+                        SELECT price, quantity FROM card_conditions 
+                        WHERE card_id = ? AND condition_code = ?
+                    ");
+                    $stmt->execute([$item['id'], $item['condition_code']]);
+                    $condition = $stmt->fetch();
+
+                    if (!$condition) {
+                        throw new Exception('Condition de carte introuvable');
+                    }
+
+                    // Vérifier que le stock est suffisant
+                    if ($condition['quantity'] < $item['cart_quantity']) {
+                        throw new Exception('Stock insuffisant pour ' . $item['name'] . ' [' . CARD_CONDITIONS[$item['condition_code']] . ']');
+                    }
+
+                    // Ajouter l'article à la commande
+                    $stmt = $conn->prepare("
+                        INSERT INTO order_items (order_id, card_id, condition_code, quantity, price) 
+                        VALUES (?, ?, ?, ?, ?)
+                    ");
+                    $stmt->execute([
+                        $orderId,
+                        $item['id'],
+                        $item['condition_code'],
+                        $item['cart_quantity'],
+                        $item['price']
+                    ]);
 
                     // Mettre à jour le stock
-                    $newQuantity = $item['quantity'] - $item['cart_quantity'];
-                    updateCardStock($item['id'], $newQuantity);
+                    $newQuantity = $condition['quantity'] - $item['cart_quantity'];
+                    $stmt = $conn->prepare("
+                        UPDATE card_conditions 
+                        SET quantity = ? 
+                        WHERE card_id = ? AND condition_code = ?
+                    ");
+                    $stmt->execute([$newQuantity, $item['id'], $item['condition_code']]);
                 }
 
                 // Envoyer l'email de confirmation
@@ -73,11 +112,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Vider le panier
                 clearCart();
 
+                // Valider la transaction
+                $conn->commit();
+
                 $success = true;
             } else {
                 throw new Exception('Erreur lors de la création de la commande');
             }
         } catch (Exception $e) {
+            // Annuler la transaction en cas d'erreur
+            $conn->rollBack();
             $errors[] = 'Une erreur est survenue : ' . $e->getMessage();
         }
     }
@@ -193,7 +237,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="flex-grow">
                                         <div class="font-medium"><?php echo htmlspecialchars($item['name']); ?></div>
                                         <div class="text-sm text-gray-500">
-                                            <?php echo isset(CARD_CONDITIONS[$item['card_condition']]) ? CARD_CONDITIONS[$item['card_condition']] : 'Non spécifié'; ?> |
+                                            <span class="condition-badge condition-<?php echo $item['condition_code']; ?> mr-1">
+                                                <?php echo isset(CARD_CONDITIONS[$item['condition_code']]) ? CARD_CONDITIONS[$item['condition_code']] : 'Non spécifié'; ?>
+                                            </span>
                                             <?php echo htmlspecialchars($item['card_number']); ?>
                                         </div>
                                     </div>

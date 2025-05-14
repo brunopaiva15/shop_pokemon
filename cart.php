@@ -41,7 +41,7 @@ $cartTotal = getCartTotal();
                 </thead>
                 <tbody class="text-gray-600 text-sm">
                     <?php foreach ($cartItems as $item): ?>
-                        <tr class="cart-item border-b border-gray-200 hover:bg-gray-50" data-card-id="<?php echo $item['id']; ?>">
+                        <tr class="cart-item border-b border-gray-200 hover:bg-gray-50" data-card-id="<?php echo $item['id']; ?>" data-condition="<?php echo $item['condition_code']; ?>">
                             <td class="py-4 px-6 text-left">
                                 <div class="flex items-center">
                                     <div class="mr-4">
@@ -61,8 +61,8 @@ $cartTotal = getCartTotal();
                                 </div>
                             </td>
                             <td class="py-4 px-6 text-center">
-                                <span class="condition-badge condition-<?php echo $item['card_condition']; ?>">
-                                    <?php echo isset(CARD_CONDITIONS[$item['card_condition']]) ? CARD_CONDITIONS[$item['card_condition']] : 'Non spécifié'; ?>
+                                <span class="condition-badge condition-<?php echo $item['condition_code']; ?>">
+                                    <?php echo isset(CARD_CONDITIONS[$item['condition_code']]) ? CARD_CONDITIONS[$item['condition_code']] : 'Non spécifié'; ?>
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-center">
@@ -113,6 +113,196 @@ $cartTotal = getCartTotal();
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestion des boutons de quantité
+        document.querySelectorAll('.quantity-modifier').forEach(button => {
+            button.addEventListener('click', function() {
+                const selector = this.closest('.quantity-selector');
+                if (!selector) return;
+
+                const input = selector.querySelector('input');
+                if (!input) return;
+
+                const currentValue = parseInt(input.value, 10) || 1;
+                const increment = this.dataset.modifier === 'plus' ? 1 : -1;
+                const maxValue = parseInt(input.getAttribute('max') || '999', 10);
+
+                input.value = Math.min(maxValue, Math.max(1, currentValue + increment));
+
+                // Mettre à jour le panier
+                const cartItem = this.closest('.cart-item');
+                if (cartItem) {
+                    updateCartItem(
+                        cartItem.dataset.cardId,
+                        cartItem.dataset.condition,
+                        parseInt(input.value, 10)
+                    );
+                }
+            });
+        });
+
+        // Mise à jour des quantités via input
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const maxValue = parseInt(this.getAttribute('max') || '999', 10);
+                let currentValue = parseInt(this.value, 10) || 1;
+
+                if (currentValue > maxValue) {
+                    this.value = maxValue;
+                    currentValue = maxValue;
+                    showNotification(`Quantité limitée à ${maxValue} en stock`, "error");
+                } else if (currentValue < 1) {
+                    this.value = 1;
+                    currentValue = 1;
+                }
+
+                // Mettre à jour le panier
+                const cartItem = this.closest('.cart-item');
+                if (cartItem) {
+                    updateCartItem(
+                        cartItem.dataset.cardId,
+                        cartItem.dataset.condition,
+                        currentValue
+                    );
+                }
+            });
+        });
+
+        // Gestion des boutons de suppression
+        document.querySelectorAll('.remove-from-cart').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const cartItem = this.closest('.cart-item');
+                if (!cartItem) return;
+
+                const cardId = cartItem.dataset.cardId;
+                const condition = cartItem.dataset.condition;
+
+                removeFromCart(cardId, condition, cartItem);
+            });
+        });
+
+        // Fonction pour mettre à jour un article
+        function updateCartItem(cardId, condition, quantity) {
+            fetch("cart-ajax.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: `action=update&card_id=${cardId}&condition=${condition}&quantity=${quantity}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mettre à jour le sous-total
+                        const cartItem = document.querySelector(`.cart-item[data-card-id="${cardId}"][data-condition="${condition}"]`);
+                        if (cartItem) {
+                            const subtotalElement = cartItem.querySelector('.subtotal');
+                            if (subtotalElement) {
+                                subtotalElement.textContent = data.item_subtotal;
+                            }
+                        }
+
+                        // Mettre à jour le total du panier
+                        const cartTotalElement = document.querySelector('.cart-total');
+                        if (cartTotalElement) {
+                            cartTotalElement.textContent = data.cart_total;
+                        }
+
+                        // Mettre à jour le compteur du panier
+                        updateCartCount(data.cart_count);
+                    } else {
+                        showNotification("Erreur: " + data.message, "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    showNotification("Une erreur est survenue", "error");
+                });
+        }
+
+        // Fonction pour supprimer un article
+        function removeFromCart(cardId, condition, cartItemElement) {
+            fetch("cart-ajax.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: `action=remove&card_id=${cardId}&condition=${condition}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Supprimer l'élément du DOM
+                        cartItemElement.remove();
+
+                        // Mettre à jour le total du panier
+                        const cartTotalElement = document.querySelector('.cart-total');
+                        if (cartTotalElement) {
+                            cartTotalElement.textContent = data.cart_total;
+                        }
+
+                        // Mettre à jour le compteur du panier
+                        updateCartCount(data.cart_count);
+
+                        // Si le panier est vide, recharger la page
+                        if (data.cart_count === 0) {
+                            location.reload();
+                        }
+
+                        showNotification("Article supprimé du panier", "success");
+                    } else {
+                        showNotification("Erreur: " + data.message, "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    showNotification("Une erreur est survenue", "error");
+                });
+        }
+
+        // Fonction pour mettre à jour le compteur du panier
+        function updateCartCount(count) {
+            const cartCountElement = document.querySelector(".fa-shopping-cart")?.nextElementSibling;
+            if (cartCountElement) {
+                if (count > 0) {
+                    cartCountElement.textContent = count;
+                } else {
+                    cartCountElement.remove();
+                }
+            }
+        }
+
+        // Fonction pour afficher des notifications
+        function showNotification(message, type) {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
+                    } mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('opacity-0');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    });
+</script>
 
 <?php
 // Inclure le pied de page

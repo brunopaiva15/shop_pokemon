@@ -44,24 +44,32 @@ $allSeries = getAllSeries();
 // Récupérer les cartes en fonction des filtres
 $conn = getDbConnection();
 
-// Construire la requête
-$query = "SELECT c.*, s.name as series_name FROM cards c 
-          LEFT JOIN series s ON c.series_id = s.id 
-          WHERE 1=1";
-$params = [];
-
-if ($seriesId) {
-    $query .= " AND c.series_id = ?";
-    $params[] = $seriesId;
-}
+// Construire la requête de base
+$baseQuery = "
+    SELECT DISTINCT c.id, c.name, c.card_number, c.rarity, c.variant, c.image_url, c.created_at, c.description, 
+           s.name as series_name
+    FROM cards c 
+    LEFT JOIN series s ON c.series_id = s.id 
+";
 
 if ($condition) {
-    $query .= " AND c.card_condition = ?";
+    $baseQuery .= "JOIN card_conditions cc ON c.id = cc.card_id AND cc.condition_code = ? ";
+}
+
+$baseQuery .= "WHERE 1=1 ";
+$params = [];
+
+if ($condition) {
     $params[] = $condition;
 }
 
+if ($seriesId) {
+    $baseQuery .= "AND c.series_id = ? ";
+    $params[] = $seriesId;
+}
+
 if (!empty($search)) {
-    $query .= " AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ?)";
+    $baseQuery .= "AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ?) ";
     $searchTerm = "%$search%";
     $params[] = $searchTerm;
     $params[] = $searchTerm;
@@ -69,20 +77,73 @@ if (!empty($search)) {
 }
 
 // Compter le nombre total de cartes qui correspondent aux filtres
-$countQuery = str_replace("c.*, s.name as series_name", "COUNT(*) as total", $query);
-$countStmt = $conn->prepare($countQuery);
+$countQuery = "SELECT COUNT(DISTINCT c.id) as total FROM cards c LEFT JOIN series s ON c.series_id = s.id ";
+if ($condition) {
+    $countQuery .= "JOIN card_conditions cc ON c.id = cc.card_id AND cc.condition_code = ? ";
+}
+$countQuery .= "WHERE 1=1 ";
+
+$countStmt = $conn->prepare($countQuery . substr($baseQuery, strpos($baseQuery, "WHERE 1=1") + 9));
 $countStmt->execute($params);
 $totalCards = $countStmt->fetch()['total'];
 $totalPages = ceil($totalCards / $perPage);
 
-// Ajouter le tri et la pagination
-$query .= " ORDER BY c.$sortBy $sortOrder LIMIT ?, ?";
+// Ajouter le tri et la pagination à la requête principale
+$mainQuery = $baseQuery;
+// Ajuster le tri pour les colonnes qui sont maintenant dans card_conditions
+if ($sortBy == 'price' || $sortBy == 'quantity') {
+    $mainQuery = str_replace("LEFT JOIN series", "JOIN card_conditions ON c.id = card_conditions.card_id LEFT JOIN series", $mainQuery);
+    $mainQuery .= "GROUP BY c.id ORDER BY MIN(card_conditions." . $sortBy . ") " . $sortOrder;
+} else {
+    $mainQuery .= "ORDER BY c." . $sortBy . " " . $sortOrder;
+}
+
+$mainQuery .= " LIMIT ?, ?";
 $params[] = (int)$offset;
 $params[] = (int)$perPage;
 
-$stmt = $conn->prepare($query);
+$stmt = $conn->prepare($mainQuery);
 $stmt->execute($params);
 $cards = $stmt->fetchAll();
+
+// Pour chaque carte, récupérer ses conditions
+foreach ($cards as &$card) {
+    // Récupérer toutes les conditions disponibles
+    $condQuery = "SELECT * FROM card_conditions WHERE card_id = ?";
+
+    // Filtrer par état spécifique si demandé
+    if ($condition) {
+        $condQuery .= " AND condition_code = ?";
+        $condParams = [$card['id'], $condition];
+    } else {
+        $condQuery .= " ORDER BY price ASC";
+        $condParams = [$card['id']];
+    }
+
+    $condStmt = $conn->prepare($condQuery);
+    $condStmt->execute($condParams);
+    $cardConditions = $condStmt->fetchAll();
+
+    // Compter le nombre d'états disponibles
+    $conditionCount = count($cardConditions);
+
+    if ($conditionCount > 0) {
+        // Prendre le meilleur prix pour l'affichage
+        $bestCondition = $cardConditions[0]; // Déjà trié par prix ASC
+
+        $card['condition_code'] = $conditionCount > 1 ? 'multiple' : $bestCondition['condition_code'];
+        $card['price'] = $bestCondition['price'];
+        $card['quantity'] = array_sum(array_column($cardConditions, 'quantity'));
+        $card['condition_count'] = $conditionCount;
+        $card['conditions'] = $cardConditions;
+    } else {
+        $card['condition_code'] = "";
+        $card['price'] = 0;
+        $card['quantity'] = 0;
+        $card['condition_count'] = 0;
+        $card['conditions'] = [];
+    }
+}
 
 // Générer les paramètres d'URL pour la pagination
 $paginationParams = $_GET;
@@ -168,49 +229,75 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 <p class="text-gray-500">Aucune carte ne correspond à vos critères.</p>
             </div>
         <?php else: ?>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+            <div class="overflow-x-auto mb-4">
+                <table class="min-w-full divide-y divide-gray-200 table-fixed">
                     <thead>
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Série</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">État</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rareté</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variante</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">Image</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Nom</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">Série</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">N°</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">État</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Rareté</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Variante</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Prix</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Stock</th>
+                            <th class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <?php foreach ($cards as $card): ?>
                             <tr>
-                                <td class="px-4 py-2 whitespace-nowrap">
-                                    <div class="w-12 h-12 bg-gray-100 rounded-md overflow-hidden">
+                                <td class="px-2 py-2">
+                                    <div class="w-10 h-10 bg-gray-100 rounded-md overflow-hidden">
                                         <img src="<?php echo $card['image_url'] ?: '../assets/images/card-placeholder.png'; ?>"
                                             alt="<?php echo htmlspecialchars($card['name']); ?>"
                                             class="w-full h-full object-contain">
                                     </div>
                                 </td>
-                                <td class="px-4 py-2 whitespace-nowrap font-medium"><?php echo htmlspecialchars($card['name']); ?></td>
-                                <td class="px-4 py-2 whitespace-nowrap"><?php echo htmlspecialchars($card['series_name']); ?></td>
-                                <td class="px-4 py-2 whitespace-nowrap"><?php echo htmlspecialchars($card['card_number']); ?></td>
-                                <td class="px-4 py-2 whitespace-nowrap">
-                                    <span class="condition-badge condition-<?php echo $card['card_condition']; ?>">
-                                        <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
-                                    </span>
+                                <td class="px-2 py-2 text-sm font-medium truncate" title="<?php echo htmlspecialchars($card['name']); ?>">
+                                    <?php echo htmlspecialchars($card['name']); ?>
                                 </td>
-                                <td class="px-4 py-2 whitespace-nowrap"><?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></td>
-                                <td class="px-4 py-2 whitespace-nowrap"><?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></td>
-                                <td class="px-4 py-2 whitespace-nowrap"><?php echo formatPrice($card['price']); ?></td>
-                                <td class="px-4 py-2 whitespace-nowrap">
+                                <td class="px-2 py-2 text-sm truncate" title="<?php echo htmlspecialchars($card['series_name']); ?>">
+                                    <?php echo htmlspecialchars($card['series_name']); ?>
+                                </td>
+                                <td class="px-2 py-2 text-sm"><?php echo htmlspecialchars($card['card_number']); ?></td>
+                                <td class="px-2 py-2 text-sm">
+                                    <?php if ($card['condition_count'] > 0): ?>
+                                        <?php if ($card['condition_count'] > 1): ?>
+                                            <span class="condition-badge condition-multiple text-xs">
+                                                Multiple (<?php echo $card['condition_count']; ?>)
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="condition-badge condition-<?php echo $card['condition_code']; ?> text-xs">
+                                                <?php echo CARD_CONDITIONS[$card['condition_code']]; ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="text-gray-400 text-xs">Non défini</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="px-2 py-2 text-sm truncate">
+                                    <?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?>
+                                </td>
+                                <td class="px-2 py-2 text-sm truncate">
+                                    <?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?>
+                                </td>
+                                <td class="px-2 py-2 text-sm">
+                                    <?php if ($card['condition_count'] > 1): ?>
+                                        <span title="À partir de <?php echo formatPrice($card['price']); ?>">
+                                            De <?php echo formatPrice($card['price']); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <?php echo formatPrice($card['price']); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="px-2 py-2 text-sm">
                                     <span class="<?php echo $card['quantity'] == 0 ? 'text-red-600 font-bold' : ($card['quantity'] < 3 ? 'text-yellow-600 font-bold' : 'text-green-600'); ?>">
                                         <?php echo $card['quantity']; ?>
                                     </span>
                                 </td>
-                                <td class="px-4 py-2 whitespace-nowrap">
+                                <td class="px-2 py-2 text-sm">
                                     <div class="flex space-x-2">
                                         <a href="../card-details.php?id=<?php echo $card['id']; ?>" target="_blank" class="action-button view" title="Voir">
                                             <i class="fas fa-eye"></i>
@@ -264,6 +351,32 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <?php endif; ?>
     </div>
 </div>
+
+<style>
+    .condition-badge.condition-multiple {
+        background-color: #9333ea;
+        color: white;
+    }
+
+    /* Pour gérer le texte long dans les cellules du tableau */
+    .truncate {
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Réduire la taille du texte dans le tableau pour un meilleur ajustement */
+    .text-sm {
+        font-size: 0.875rem;
+    }
+
+    /* Réduire légèrement le padding des cellules */
+    .px-2 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+</style>
 
 <?php
 // Inclure le pied de page

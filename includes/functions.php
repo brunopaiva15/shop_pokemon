@@ -25,7 +25,8 @@ function getSeriesWithCards()
         SELECT DISTINCT s.* 
         FROM series s
         INNER JOIN cards c ON s.id = c.series_id
-        WHERE c.quantity > 0
+        INNER JOIN card_conditions cc ON c.id = cc.card_id
+        WHERE cc.quantity > 0
         ORDER BY s.name ASC
     ");
     return $stmt->fetchAll();
@@ -65,91 +66,173 @@ function deleteSeries($id)
 // Fonctions pour les cartes - Mise à jour avec card_condition au lieu de condition
 function getAllCards($limit = null, $offset = 0, $seriesId = null, $condition = null, $sortBy = 'created_at', $sortOrder = 'DESC')
 {
+    // Utiliser la même logique que getAllCardsWithoutPagination mais avec LIMIT
     $conn = getDbConnection();
 
-    $query = "SELECT c.*, s.name as series_name FROM cards c 
-              LEFT JOIN series s ON c.series_id = s.id 
-              WHERE c.quantity > 0"; // Ajout de cette condition pour filtrer les cartes en stock
+    // Construire la requête de base
+    $query = "
+        SELECT c.*, s.name as series_name, MIN(cc.price) as min_price 
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+        JOIN card_conditions cc ON c.id = cc.card_id
+        WHERE cc.quantity > 0";
     $params = [];
 
+    // Ajouter les conditions de filtrage
     if ($seriesId) {
         $query .= " AND c.series_id = ?";
         $params[] = $seriesId;
     }
 
     if ($condition) {
-        $query .= " AND c.card_condition = ?";
+        $query .= " AND cc.condition_code = ?";
         $params[] = $condition;
     }
 
-    $query .= " ORDER BY c.$sortBy $sortOrder";
+    // Regrouper par carte pour éviter les doublons
+    $query .= " GROUP BY c.id";
 
-    if ($limit) {
+    // Ajouter le tri
+    if ($sortBy == 'price') {
+        // Pour le tri par prix, on utilise le prix minimum de chaque carte
+        $query .= " ORDER BY min_price " . $sortOrder;
+    } else {
+        $query .= " ORDER BY c." . $sortBy . " " . $sortOrder;
+    }
+
+    // Ajouter la pagination
+    if ($limit !== null) {
         $query .= " LIMIT ?, ?";
         $params[] = (int)$offset;
         $params[] = (int)$limit;
     }
 
+    // Exécuter la requête
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
-    return $stmt->fetchAll();
+
+    // Récupérer les cartes
+    $cards = $stmt->fetchAll();
+
+    // Pour chaque carte, récupérer son état optimal (meilleur prix ou meilleur état selon le tri)
+    foreach ($cards as &$card) {
+        // Récupérer tous les états disponibles pour cette carte
+        $stmt = $conn->prepare("
+            SELECT * FROM card_conditions 
+            WHERE card_id = ? AND quantity > 0
+            ORDER BY " . ($sortBy == 'price' ? "price " . $sortOrder : "condition_code ASC") . "
+            LIMIT 1
+        ");
+        $stmt->execute([$card['id']]);
+        $bestCondition = $stmt->fetch();
+
+        if ($bestCondition) {
+            // Ajouter les informations de l'état optimal à la carte
+            $card['condition_code'] = $bestCondition['condition_code'];
+            $card['card_condition'] = $bestCondition['condition_code']; // Pour compatibilité
+            $card['price'] = $bestCondition['price'];
+            $card['quantity'] = $bestCondition['quantity'];
+        }
+    }
+
+    return $cards;
 }
 
-function countAllCards($seriesId = null, $condition = null) {
+function countAllCards($seriesId = null, $condition = null)
+{
     $conn = getDbConnection();
-    
+
     // Construire la requête de base
-    $query = "SELECT COUNT(*) as total FROM cards c WHERE 1=1";
+    $query = "
+        SELECT COUNT(DISTINCT c.id) as total 
+        FROM cards c 
+        JOIN card_conditions cc ON c.id = cc.card_id
+        WHERE cc.quantity > 0";
     $params = [];
-    
+
     // Ajouter les conditions de filtrage
     if ($seriesId) {
         $query .= " AND c.series_id = ?";
         $params[] = $seriesId;
     }
-    
+
     if ($condition) {
-        $query .= " AND c.card_condition = ?";
+        $query .= " AND cc.condition_code = ?";
         $params[] = $condition;
     }
-    
+
     // Exécuter la requête
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
     $result = $stmt->fetch();
-    
+
     return (int)$result['total'];
 }
 
-function getAllCardsWithoutPagination($seriesId = null, $condition = null, $sortBy = 'created_at', $sortOrder = 'DESC') {
+function getAllCardsWithoutPagination($seriesId = null, $condition = null, $sortBy = 'created_at', $sortOrder = 'DESC')
+{
     $conn = getDbConnection();
-    
+
     // Construire la requête de base
-    $query = "SELECT c.*, s.name as series_name 
-              FROM cards c 
-              LEFT JOIN series s ON c.series_id = s.id 
-              WHERE 1=1";
+    $query = "
+        SELECT c.*, s.name as series_name, MIN(cc.price) as min_price 
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+        JOIN card_conditions cc ON c.id = cc.card_id
+        WHERE cc.quantity > 0";
     $params = [];
-    
+
     // Ajouter les conditions de filtrage
     if ($seriesId) {
         $query .= " AND c.series_id = ?";
         $params[] = $seriesId;
     }
-    
+
     if ($condition) {
-        $query .= " AND c.card_condition = ?";
+        $query .= " AND cc.condition_code = ?";
         $params[] = $condition;
     }
-    
+
+    // Regrouper par carte pour éviter les doublons
+    $query .= " GROUP BY c.id";
+
     // Ajouter le tri
-    $query .= " ORDER BY c.$sortBy $sortOrder";
-    
+    if ($sortBy == 'price') {
+        // Pour le tri par prix, on utilise le prix minimum de chaque carte
+        $query .= " ORDER BY min_price " . $sortOrder;
+    } else {
+        $query .= " ORDER BY c." . $sortBy . " " . $sortOrder;
+    }
+
     // Exécuter la requête
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
-    
-    return $stmt->fetchAll();
+
+    // Récupérer les cartes
+    $cards = $stmt->fetchAll();
+
+    // Pour chaque carte, récupérer son état optimal (meilleur prix ou meilleur état selon le tri)
+    foreach ($cards as &$card) {
+        // Récupérer tous les états disponibles pour cette carte
+        $stmt = $conn->prepare("
+            SELECT * FROM card_conditions 
+            WHERE card_id = ? AND quantity > 0
+            ORDER BY " . ($sortBy == 'price' ? "price " . $sortOrder : "condition_code ASC") . "
+            LIMIT 1
+        ");
+        $stmt->execute([$card['id']]);
+        $bestCondition = $stmt->fetch();
+
+        if ($bestCondition) {
+            // Ajouter les informations de l'état optimal à la carte
+            $card['condition_code'] = $bestCondition['condition_code'];
+            $card['card_condition'] = $bestCondition['condition_code']; // Pour compatibilité
+            $card['price'] = $bestCondition['price'];
+            $card['quantity'] = $bestCondition['quantity'];
+        }
+    }
+
+    return $cards;
 }
 
 function cardExists($seriesId, $cardNumber, $variant)
@@ -166,19 +249,64 @@ function cardExists($seriesId, $cardNumber, $variant)
 function getCardById($id)
 {
     $conn = getDbConnection();
-    $stmt = $conn->prepare("SELECT c.*, s.name as series_name FROM cards c 
-                           LEFT JOIN series s ON c.series_id = s.id 
-                           WHERE c.id = ?");
+    $stmt = $conn->prepare("
+        SELECT c.*, s.name as series_name 
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+        WHERE c.id = ?
+    ");
     $stmt->execute([$id]);
-    return $stmt->fetch();
+    $card = $stmt->fetch();
+
+    if ($card) {
+        // Récupérer les conditions disponibles pour cette carte
+        $stmt = $conn->prepare("
+            SELECT * FROM card_conditions 
+            WHERE card_id = ? 
+            ORDER BY condition_code
+        ");
+        $stmt->execute([$id]);
+        $card['conditions'] = $stmt->fetchAll();
+    }
+
+    return $card;
 }
 
-function addCard($seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl = null, $variant = 'normal', $description = null)
+function addCard($seriesId, $name, $cardNumber, $rarity, $variant = 'normal', $description = null, $imageUrl = null)
 {
     $conn = getDbConnection();
-    $stmt = $conn->prepare("INSERT INTO cards (series_id, name, card_number, rarity, card_condition, price, quantity, image_url, variant, description) 
-                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    return $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl, $variant, $description]);
+    $stmt = $conn->prepare("
+        INSERT INTO cards (series_id, name, card_number, rarity, variant, description, image_url) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ");
+    $success = $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $variant, $description, $imageUrl]);
+
+    if ($success) {
+        return $conn->lastInsertId();
+    }
+    return false;
+}
+
+function addCardCondition($cardId, $condition, $price, $quantity)
+{
+    $conn = getDbConnection();
+    $stmt = $conn->prepare("
+        INSERT INTO card_conditions (card_id, condition_code, price, quantity) 
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE price = ?, quantity = quantity + ?
+    ");
+    return $stmt->execute([$cardId, $condition, $price, $quantity, $price, $quantity]);
+}
+
+function updateCardCondition($cardId, $condition, $price, $quantity)
+{
+    $conn = getDbConnection();
+    $stmt = $conn->prepare("
+        UPDATE card_conditions 
+        SET price = ?, quantity = ? 
+        WHERE card_id = ? AND condition_code = ?
+    ");
+    return $stmt->execute([$price, $quantity, $cardId, $condition]);
 }
 
 function updateCard($id, $seriesId, $name, $cardNumber, $rarity, $condition, $price, $quantity, $imageUrl = null, $variant = 'normal', $description = null)
@@ -373,14 +501,16 @@ function initCart()
     }
 }
 
-function addToCart($cardId, $quantity = 1)
+function addToCart($cardId, $condition, $quantity = 1)
 {
     initCart();
 
-    if (isset($_SESSION['cart'][$cardId])) {
-        $_SESSION['cart'][$cardId] += $quantity;
+    $key = $cardId . '|' . $condition;  // Clé composite pour identifier à la fois la carte et son état
+
+    if (isset($_SESSION['cart'][$key])) {
+        $_SESSION['cart'][$key] += $quantity;
     } else {
-        $_SESSION['cart'][$cardId] = $quantity;
+        $_SESSION['cart'][$key] = $quantity;
     }
 }
 
@@ -415,24 +545,38 @@ function getCartItems()
     }
 
     $conn = getDbConnection();
-    $cardIds = array_keys($_SESSION['cart']);
-    $placeholders = implode(',', array_fill(0, count($cardIds), '?'));
-
-    // Modifié pour récupérer également les informations de série
-    $stmt = $conn->prepare("SELECT c.*, s.name as series_name 
-                           FROM cards c 
-                           LEFT JOIN series s ON c.series_id = s.id 
-                           WHERE c.id IN ($placeholders)");
-    $stmt->execute($cardIds);
-    $cards = $stmt->fetchAll();
-
     $cartItems = [];
-    foreach ($cards as $card) {
-        $card['cart_quantity'] = $_SESSION['cart'][$card['id']];
-        $card['subtotal'] = $card['price'] * $card['cart_quantity'];
-        // Assurez-vous que l'état est correctement mappé (card_condition au lieu de condition)
-        $card['condition'] = $card['card_condition'];
-        $cartItems[] = $card;
+
+    foreach ($_SESSION['cart'] as $key => $quantity) {
+        list($cardId, $condition) = explode('|', $key);
+
+        // Récupérer les informations de base de la carte
+        $stmt = $conn->prepare("
+            SELECT c.*, s.name as series_name 
+            FROM cards c 
+            LEFT JOIN series s ON c.series_id = s.id 
+            WHERE c.id = ?
+        ");
+        $stmt->execute([$cardId]);
+        $card = $stmt->fetch();
+
+        if ($card) {
+            // Récupérer les informations spécifiques à l'état
+            $stmt = $conn->prepare("
+                SELECT * FROM card_conditions 
+                WHERE card_id = ? AND condition_code = ?
+            ");
+            $stmt->execute([$cardId, $condition]);
+            $conditionData = $stmt->fetch();
+
+            if ($conditionData) {
+                $item = array_merge($card, $conditionData);
+                $item['cart_quantity'] = $quantity;
+                $item['subtotal'] = $item['price'] * $quantity;
+                $item['cart_key'] = $key;
+                $cartItems[] = $item;
+            }
+        }
     }
 
     return $cartItems;

@@ -59,11 +59,10 @@ if ($currentSeries) {
     $pageTitle = 'Série : ' . htmlspecialchars($currentSeries['name']);
 }
 
-// CORRECTION : Récupérer le nombre total de cartes d'abord (sans pagination)
+// Récupérer le nombre total de cartes d'abord (sans pagination)
 $totalCardsBeforeFilters = countAllCards($seriesId, $condition);
 
 // Récupérer les cartes filtrées (sans limite pour appliquer les autres filtres)
-// CORRECTION : Récupérer toutes les cartes pour appliquer les filtres restants
 $allFilteredCards = getAllCardsWithoutPagination($seriesId, $condition, $sortBy, $sortOrder);
 
 // Appliquer les filtres supplémentaires
@@ -111,11 +110,24 @@ if ($priceMin !== null || $priceMax !== null) {
     $allFilteredCards = $filteredCards;
 }
 
-// CORRECTION : Compter le nombre total après tous les filtres
+// Compter le nombre total après tous les filtres
 $totalCards = count($allFilteredCards);
 
-// CORRECTION : Paginer les résultats
+// Paginer les résultats
 $cards = array_slice($allFilteredCards, $offset, $perPage);
+
+// Pour chaque carte, récupérer tous ses états disponibles
+$conn = getDbConnection();
+foreach ($cards as &$card) {
+    // Récupérer tous les états disponibles pour cette carte
+    $stmt = $conn->prepare("
+        SELECT * FROM card_conditions 
+        WHERE card_id = ? AND quantity > 0
+        ORDER BY price ASC
+    ");
+    $stmt->execute([$card['id']]);
+    $card['available_conditions'] = $stmt->fetchAll();
+}
 
 $totalPages = ceil($totalCards / $perPage);
 
@@ -320,9 +332,16 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                         <?php echo htmlspecialchars($card['name']); ?>
                                     </a>
                                 </h3>
-                                <span class="condition-badge condition-<?php echo $card['card_condition']; ?>">
-                                    <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
-                                </span>
+
+                                <?php if (count($card['available_conditions']) > 1): ?>
+                                    <span class="condition-badge condition-multiple">
+                                        Multiple
+                                    </span>
+                                <?php elseif (isset($card['card_condition']) && !empty($card['card_condition'])): ?>
+                                    <span class="condition-badge condition-<?php echo $card['card_condition']; ?>">
+                                        <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
 
                             <div class="text-sm text-gray-500 mb-3">
@@ -332,18 +351,55 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                 <div>Variante: <?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></div>
                             </div>
 
+                            <?php if (!empty($card['available_conditions'])): ?>
+                                <!-- États disponibles -->
+                                <div class="mb-3">
+                                    <p class="text-sm font-medium text-gray-700 mb-1">États disponibles:</p>
+                                    <div class="flex flex-wrap gap-1">
+                                        <?php foreach ($card['available_conditions'] as $condition): ?>
+                                            <div class="text-xs condition-badge condition-<?php echo $condition['condition_code']; ?>">
+                                                <?php echo CARD_CONDITIONS[$condition['condition_code']]; ?>
+                                                <span class="font-semibold"><?php echo formatPrice($condition['price']); ?></span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                             <div class="flex justify-between items-center">
-                                <div class="font-bold text-xl text-red-600"><?php echo formatPrice($card['price']); ?></div>
-                                <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
-                                    <i class="fas fa-shopping-cart mr-1"></i> Ajouter
-                                </button>
+                                <div class="font-bold text-xl text-red-600">
+                                    <?php if (count($card['available_conditions']) > 1): ?>
+                                        À partir de <?php echo formatPrice($card['price']); ?>
+                                    <?php else: ?>
+                                        <?php echo formatPrice($card['price']); ?>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (!empty($card['available_conditions']) && count($card['available_conditions']) === 1): ?>
+                                    <!-- Un seul état disponible -->
+                                    <button
+                                        data-card-id="<?php echo $card['id']; ?>"
+                                        data-condition="<?php echo $card['available_conditions'][0]['condition_code']; ?>"
+                                        class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
+                                        <i class="fas fa-shopping-cart mr-1"></i> Ajouter
+                                    </button>
+                                <?php elseif (!empty($card['available_conditions']) && count($card['available_conditions']) > 1): ?>
+                                    <!-- Plusieurs états disponibles -->
+                                    <a href="card-details.php?id=<?php echo $card['id']; ?>" class="bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
+                                        <i class="fas fa-eye mr-1"></i> Voir
+                                    </a>
+                                <?php else: ?>
+                                    <span class="bg-gray-300 text-gray-600 py-2 px-4 rounded-md">
+                                        Indisponible
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
 
-            <!-- Pagination - CORRECTION: Ajout d'un commentaire pour marquer où commence la pagination -->
+            <!-- Pagination -->
             <?php if ($totalPages > 1): ?>
                 <div class="mt-8 flex justify-center">
                     <div class="inline-flex rounded-md shadow-sm">
@@ -379,11 +435,19 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
     </div>
 </div>
 
+<style>
+    .condition-badge.condition-multiple {
+        background-color: #9333ea;
+        color: white;
+    }
+</style>
+
 <script>
     // Mettre à jour le fichier JavaScript pour inclure le filtre de rareté
     document.addEventListener('DOMContentLoaded', function() {
         // Ajout du filtre de rareté
         const rarityFilter = document.getElementById('rarity-filter');
+        const variantFilter = document.getElementById('variant-filter');
 
         // Mise à jour de la fonction applyFilters pour inclure le filtre de rareté
         window.applyFilters = function() {
@@ -392,6 +456,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             updateUrlParam(params, 'series', document.getElementById('series-filter').value);
             updateUrlParam(params, 'condition', document.getElementById('condition-filter').value);
             updateUrlParam(params, 'rarity', rarityFilter.value);
+            updateUrlParam(params, 'variant', variantFilter.value);
             updateUrlParam(params, 'sort', document.getElementById('sort-filter').value);
             updateUrlParam(params, 'price_min', document.getElementById('price-min').value);
             updateUrlParam(params, 'price_max', document.getElementById('price-max').value);
@@ -411,7 +476,8 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             document.getElementById('series-filter').value = '';
             document.getElementById('condition-filter').value = '';
             rarityFilter.value = '';
-            document.getElementById('sort-filter').value = 'newest';
+            variantFilter.value = '';
+            document.getElementById('sort-filter').value = 'number_asc';
             document.getElementById('price-min').value = '';
             document.getElementById('price-max').value = '';
 
@@ -425,6 +491,15 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 window.location.href = window.location.pathname;
             }
         };
+
+        // Fonction pour mettre à jour un paramètre d'URL
+        function updateUrlParam(params, key, value) {
+            if (value) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        }
 
         // Gestion de la fenêtre modale pour le guide des états des cartes
         const showButton = document.getElementById('show-condition-guide');
@@ -458,6 +533,97 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                     document.body.style.overflow = '';
                 }
             });
+        }
+
+        // Gestion du bouton mobile pour afficher/masquer les filtres
+        const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
+        const filterSidebar = document.getElementById('filter-sidebar');
+
+        if (mobileFilterToggle && filterSidebar) {
+            mobileFilterToggle.addEventListener('click', function() {
+                filterSidebar.classList.toggle('hidden');
+                mobileFilterToggle.innerHTML = filterSidebar.classList.contains('hidden') ?
+                    '<i class="fas fa-filter mr-1"></i> Filtres' :
+                    '<i class="fas fa-times mr-1"></i> Masquer';
+            });
+        }
+
+        // Gestion des boutons d'ajout au panier
+        const addToCartButtons = document.querySelectorAll('.add-to-cart');
+
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const cardId = this.dataset.cardId;
+                const condition = this.dataset.condition;
+
+                // Animation
+                this.classList.add('add-to-cart-pulse');
+                setTimeout(() => {
+                    this.classList.remove('add-to-cart-pulse');
+                }, 500);
+
+                // Requête AJAX pour ajouter au panier
+                fetch('cart-ajax.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `action=add&card_id=${cardId}&condition=${condition}&quantity=1`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mettre à jour l'icône du panier
+                            const cartCountElement = document.querySelector('.fa-shopping-cart')?.nextElementSibling;
+                            if (cartCountElement) {
+                                cartCountElement.textContent = data.cart_count;
+                            } else {
+                                const cartIcon = document.querySelector('.fa-shopping-cart');
+                                if (cartIcon?.parentNode) {
+                                    const countSpan = document.createElement('span');
+                                    countSpan.className = 'absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs';
+                                    countSpan.textContent = data.cart_count;
+                                    cartIcon.parentNode.appendChild(countSpan);
+                                }
+                            }
+
+                            // Afficher une notification
+                            showNotification('Carte ajoutée au panier !', 'success');
+                        } else {
+                            showNotification('Erreur: ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Une erreur est survenue', 'error');
+                    });
+            });
+        });
+
+        // Fonction pour afficher des notifications
+        function showNotification(message, type) {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
+                    } mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('opacity-0');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
     });
 </script>

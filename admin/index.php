@@ -14,8 +14,11 @@ $conn = getDbConnection();
 $stmt = $conn->query("SELECT COUNT(*) as total FROM cards");
 $totalCards = $stmt->fetch()['total'];
 
-// Nombre total de cartes en stock
-$stmt = $conn->query("SELECT COUNT(*) as total FROM cards WHERE quantity > 0");
+// Nombre total de cartes en stock (avec au moins une condition avec quantité > 0)
+$stmt = $conn->query("SELECT COUNT(DISTINCT c.id) as total 
+                     FROM cards c 
+                     JOIN card_conditions cc ON c.id = cc.card_id 
+                     WHERE cc.quantity > 0");
 $totalCardsInStock = $stmt->fetch()['total'];
 
 // Nombre total de séries
@@ -39,30 +42,71 @@ $stmt = $conn->query("SELECT * FROM orders ORDER BY created_at DESC LIMIT 5");
 $recentOrders = $stmt->fetchAll();
 
 // Récupérer les dernières cartes ajoutées
-$stmt = $conn->query("SELECT c.*, s.name as series_name FROM cards c 
+$stmt = $conn->query("SELECT c.*, s.name as series_name 
+                     FROM cards c 
                      LEFT JOIN series s ON c.series_id = s.id 
                      ORDER BY c.created_at DESC LIMIT 5");
 $recentCards = $stmt->fetchAll();
 
-// Cartes les plus vendues
-$stmt = $conn->query("SELECT c.id, c.name, c.card_number, c.image_url, c.price, c.quantity, s.name as series_name, 
+// Pour chaque carte récente, récupérer sa meilleure condition
+foreach ($recentCards as &$card) {
+    $stmt = $conn->prepare("SELECT * FROM card_conditions 
+                           WHERE card_id = ? AND quantity > 0
+                           ORDER BY price ASC
+                           LIMIT 1");
+    $stmt->execute([$card['id']]);
+    $bestCondition = $stmt->fetch();
+
+    if ($bestCondition) {
+        $card['price'] = $bestCondition['price'];
+        $card['quantity'] = $bestCondition['quantity'];
+        $card['condition_code'] = $bestCondition['condition_code'];
+    } else {
+        $card['price'] = 0;
+        $card['quantity'] = 0;
+        $card['condition_code'] = '';
+    }
+}
+
+// Cartes les plus vendues - version compatible avant migration
+$stmt = $conn->query("SELECT c.id, c.name, c.card_number, c.image_url, 
+                     MIN(cc.price) as price, SUM(cc.quantity) as quantity,
+                     s.name as series_name, 
                      SUM(oi.quantity) as sold_quantity 
                      FROM order_items oi 
                      JOIN cards c ON oi.card_id = c.id 
+                     JOIN card_conditions cc ON c.id = cc.card_id
                      LEFT JOIN series s ON c.series_id = s.id 
                      JOIN orders o ON oi.order_id = o.id 
                      WHERE o.status != 'cancelled' 
-                     GROUP BY c.id 
+                     GROUP BY c.id
                      ORDER BY sold_quantity DESC 
                      LIMIT 5");
 $topSellingCards = $stmt->fetchAll();
 
+// Pour chaque carte vendue, récupérer sa meilleure condition
+foreach ($topSellingCards as &$card) {
+    $stmt = $conn->prepare("SELECT * FROM card_conditions 
+                           WHERE card_id = ? AND quantity > 0
+                           ORDER BY price ASC
+                           LIMIT 1");
+    $stmt->execute([$card['id']]);
+    $bestCondition = $stmt->fetch();
+
+    if ($bestCondition) {
+        $card['condition_code'] = $bestCondition['condition_code'];
+    } else {
+        $card['condition_code'] = '';
+    }
+}
+
 // Cartes à faible stock (moins de 3 exemplaires)
-$stmt = $conn->query("SELECT c.*, s.name as series_name 
+$stmt = $conn->query("SELECT c.*, s.name as series_name, cc.condition_code, cc.price, cc.quantity
                      FROM cards c 
+                     JOIN card_conditions cc ON c.id = cc.card_id
                      LEFT JOIN series s ON c.series_id = s.id 
-                     WHERE c.quantity > 0 AND c.quantity < 3 
-                     ORDER BY c.quantity ASC 
+                     WHERE cc.quantity > 0 AND cc.quantity < 3 
+                     ORDER BY cc.quantity ASC 
                      LIMIT 5");
 $lowStockCards = $stmt->fetchAll();
 ?>
@@ -213,8 +257,15 @@ $lowStockCards = $stmt->fetchAll();
                                 N°: <?php echo htmlspecialchars($card['card_number']); ?>
                             </div>
                             <div class="text-sm">
-                                <span class="text-green-600 font-medium"><?php echo formatPrice($card['price']); ?></span> |
-                                Stock: <?php echo $card['quantity']; ?>
+                                <?php if ($card['quantity'] > 0): ?>
+                                    <span class="text-green-600 font-medium"><?php echo formatPrice($card['price']); ?></span> |
+                                    Stock: <?php echo $card['quantity']; ?>
+                                    <?php if (!empty($card['condition_code'])): ?> |
+                                        État: <?php echo CARD_CONDITIONS[$card['condition_code']]; ?>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="text-red-600">Indisponible</span>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div>
@@ -252,6 +303,9 @@ $lowStockCards = $stmt->fetchAll();
                             <h3 class="font-medium"><?php echo htmlspecialchars($card['name']); ?></h3>
                             <div class="text-sm text-gray-500">
                                 Série: <?php echo htmlspecialchars($card['series_name']); ?>
+                                <?php if (!empty($card['condition_code'])): ?> |
+                                    État: <?php echo CARD_CONDITIONS[$card['condition_code']]; ?>
+                                <?php endif; ?>
                             </div>
                             <div class="text-sm">
                                 <span class="text-green-600 font-medium"><?php echo formatPrice($card['price']); ?></span> |
@@ -282,7 +336,8 @@ $lowStockCards = $stmt->fetchAll();
                         <div class="ml-4 flex-grow">
                             <h3 class="font-medium"><?php echo htmlspecialchars($card['name']); ?></h3>
                             <div class="text-sm text-gray-500">
-                                Série: <?php echo htmlspecialchars($card['series_name']); ?>
+                                Série: <?php echo htmlspecialchars($card['series_name']); ?> |
+                                État: <?php echo CARD_CONDITIONS[$card['condition_code']]; ?>
                             </div>
                             <div class="text-sm">
                                 <span class="text-green-600 font-medium"><?php echo formatPrice($card['price']); ?></span> |
