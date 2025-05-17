@@ -190,6 +190,7 @@ foreach ($cards as &$card) {
     $stmt->execute([$card['id']]);
     $card['available_conditions'] = $stmt->fetchAll();
 }
+unset($card); // Libérer la référence
 
 $totalPages = ceil($totalCards / $perPage);
 
