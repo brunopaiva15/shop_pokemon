@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Inclure le fichier qui contient les fonctions utilitaires, dont sanitizeInput()
-require_once 'includes/functions.php';
+require_once '../includes/functions.php';
 
 // Définir le titre de la page
 $pageTitle = 'Gestion des cartes';
