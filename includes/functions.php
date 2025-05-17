@@ -169,13 +169,13 @@ function countAllCards($seriesId = null, $condition = null)
     return (int)$result['total'];
 }
 
-function getAllCardsWithoutPagination($seriesId = null, $condition = null, $sortBy = 'created_at', $sortOrder = 'DESC')
+function getAllCardsWithoutPagination($seriesId = null, $condition = null, $rarity = null, $variant = null, $priceMin = null, $priceMax = null, $sortBy = 'created_at', $sortOrder = 'DESC')
 {
     $conn = getDbConnection();
 
     // Construire la requête de base
     $query = "
-        SELECT c.*, s.name as series_name, MIN(cc.price) as min_price 
+        SELECT c.*, s.name as series_name, MIN(cc.price) as price
         FROM cards c 
         LEFT JOIN series s ON c.series_id = s.id 
         JOIN card_conditions cc ON c.id = cc.card_id
@@ -193,13 +193,33 @@ function getAllCardsWithoutPagination($seriesId = null, $condition = null, $sort
         $params[] = $condition;
     }
 
+    if ($rarity) {
+        $query .= " AND c.rarity = ?";
+        $params[] = $rarity;
+    }
+
+    if ($variant) {
+        $query .= " AND c.variant = ?";
+        $params[] = $variant;
+    }
+
+    if ($priceMin !== null) {
+        $query .= " AND cc.price >= ?";
+        $params[] = $priceMin;
+    }
+
+    if ($priceMax !== null) {
+        $query .= " AND cc.price <= ?";
+        $params[] = $priceMax;
+    }
+
     // Regrouper par carte pour éviter les doublons
     $query .= " GROUP BY c.id";
 
     // Ajouter le tri
     if ($sortBy == 'price') {
         // Pour le tri par prix, on utilise le prix minimum de chaque carte
-        $query .= " ORDER BY min_price " . $sortOrder;
+        $query .= " ORDER BY price " . $sortOrder;
     } else {
         $query .= " ORDER BY c." . $sortBy . " " . $sortOrder;
     }
@@ -208,31 +228,7 @@ function getAllCardsWithoutPagination($seriesId = null, $condition = null, $sort
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
 
-    // Récupérer les cartes
-    $cards = $stmt->fetchAll();
-
-    // Pour chaque carte, récupérer son état optimal (meilleur prix ou meilleur état selon le tri)
-    foreach ($cards as &$card) {
-        // Récupérer tous les états disponibles pour cette carte
-        $stmt = $conn->prepare("
-            SELECT * FROM card_conditions 
-            WHERE card_id = ? AND quantity > 0
-            ORDER BY " . ($sortBy == 'price' ? "price " . $sortOrder : "condition_code ASC") . "
-            LIMIT 1
-        ");
-        $stmt->execute([$card['id']]);
-        $bestCondition = $stmt->fetch();
-
-        if ($bestCondition) {
-            // Ajouter les informations de l'état optimal à la carte
-            $card['condition_code'] = $bestCondition['condition_code'];
-            $card['card_condition'] = $bestCondition['condition_code']; // Pour compatibilité
-            $card['price'] = $bestCondition['price'];
-            $card['quantity'] = $bestCondition['quantity'];
-        }
-    }
-
-    return $cards;
+    return $stmt->fetchAll();
 }
 
 function cardExists($seriesId, $cardNumber, $variant)

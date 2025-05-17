@@ -41,102 +41,174 @@ require_once 'includes/header.php';
 // Récupérer toutes les séries pour les filtres
 $allSeries = getAllSeries();
 
-// Récupérer les cartes en fonction des filtres
-$conn = getDbConnection();
+// Fonction pour compter les cartes filtrées
+function countFilteredCards($seriesId, $condition, $search)
+{
+    $conn = getDbConnection();
 
-// Construire la requête de base
-$baseQuery = "
-    SELECT DISTINCT c.id, c.name, c.card_number, c.rarity, c.variant, c.image_url, c.created_at, c.description, 
-           s.name as series_name
-    FROM cards c 
-    LEFT JOIN series s ON c.series_id = s.id 
-";
+    // Construire la requête de base
+    $query = "
+        SELECT COUNT(DISTINCT c.id) as total 
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+    ";
 
-if ($condition) {
-    $baseQuery .= "JOIN card_conditions cc ON c.id = cc.card_id AND cc.condition_code = ? ";
-}
+    $params = [];
 
-$baseQuery .= "WHERE 1=1 ";
-$params = [];
-
-if ($condition) {
-    $params[] = $condition;
-}
-
-if ($seriesId) {
-    $baseQuery .= "AND c.series_id = ? ";
-    $params[] = $seriesId;
-}
-
-if (!empty($search)) {
-    $baseQuery .= "AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ?) ";
-    $searchTerm = "%$search%";
-    $params[] = $searchTerm;
-    $params[] = $searchTerm;
-    $params[] = $searchTerm;
-}
-
-// Compter le nombre total de cartes qui correspondent aux filtres
-$countQuery = "SELECT COUNT(DISTINCT c.id) as total FROM cards c LEFT JOIN series s ON c.series_id = s.id ";
-if ($condition) {
-    $countQuery .= "JOIN card_conditions cc ON c.id = cc.card_id AND cc.condition_code = ? ";
-}
-$countQuery .= "WHERE 1=1 ";
-
-$countStmt = $conn->prepare($countQuery . substr($baseQuery, strpos($baseQuery, "WHERE 1=1") + 9));
-$countStmt->execute($params);
-$totalCards = $countStmt->fetch()['total'];
-$totalPages = ceil($totalCards / $perPage);
-
-// Ajouter le tri et la pagination à la requête principale
-$mainQuery = $baseQuery;
-// Ajuster le tri pour les colonnes qui sont maintenant dans card_conditions
-if ($sortBy == 'price' || $sortBy == 'quantity') {
-    $mainQuery = str_replace("LEFT JOIN series", "JOIN card_conditions ON c.id = card_conditions.card_id LEFT JOIN series", $mainQuery);
-    $mainQuery .= "GROUP BY c.id ORDER BY MIN(card_conditions." . $sortBy . ") " . $sortOrder;
-} else {
-    $mainQuery .= "ORDER BY c." . $sortBy . " " . $sortOrder;
-}
-
-$mainQuery .= " LIMIT ?, ?";
-$params[] = (int)$offset;
-$params[] = (int)$perPage;
-
-$stmt = $conn->prepare($mainQuery);
-$stmt->execute($params);
-$cards = $stmt->fetchAll();
-
-// Pour chaque carte, récupérer ses conditions
-foreach ($cards as &$card) {
-    // Récupérer toutes les conditions disponibles
-    $condQuery = "SELECT * FROM card_conditions WHERE card_id = ?";
-
-    // Filtrer par état spécifique si demandé
+    // Ajouter la jointure avec card_conditions seulement si nécessaire
     if ($condition) {
-        $condQuery .= " AND condition_code = ?";
-        $condParams = [$card['id'], $condition];
-    } else {
-        $condQuery .= " ORDER BY price ASC";
-        $condParams = [$card['id']];
+        $query .= "JOIN card_conditions cc ON c.id = cc.card_id ";
     }
 
-    $condStmt = $conn->prepare($condQuery);
-    $condStmt->execute($condParams);
-    $cardConditions = $condStmt->fetchAll();
+    $query .= "WHERE 1=1 ";
 
-    // Compter le nombre d'états disponibles
-    $conditionCount = count($cardConditions);
+    // Ajouter les conditions de filtrage
+    if ($seriesId) {
+        $query .= "AND c.series_id = ? ";
+        $params[] = $seriesId;
+    }
 
-    if ($conditionCount > 0) {
-        // Prendre le meilleur prix pour l'affichage
-        $bestCondition = $cardConditions[0]; // Déjà trié par prix ASC
+    if ($condition) {
+        $query .= "AND cc.condition_code = ? ";
+        $params[] = $condition;
+    }
 
-        $card['condition_code'] = $conditionCount > 1 ? 'multiple' : $bestCondition['condition_code'];
-        $card['price'] = $bestCondition['price'];
-        $card['quantity'] = array_sum(array_column($cardConditions, 'quantity'));
-        $card['condition_count'] = $conditionCount;
-        $card['conditions'] = $cardConditions;
+    if (!empty($search)) {
+        $query .= "AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ?) ";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
+
+    $stmt = $conn->prepare($query);
+    $stmt->execute($params);
+    $result = $stmt->fetch();
+
+    return (int)$result['total'];
+}
+
+// Fonction pour récupérer les cartes filtrées
+function getFilteredCards($seriesId, $condition, $search, $sortBy, $sortOrder, $offset, $perPage)
+{
+    $conn = getDbConnection();
+
+    // Construire la requête de base
+    $query = "
+        SELECT DISTINCT c.id, c.name, c.card_number, c.rarity, c.variant, c.image_url, c.created_at, c.description, 
+               s.name as series_name
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+    ";
+
+    // Ajouter la jointure avec card_conditions seulement si nécessaire
+    if ($condition) {
+        $query .= "JOIN card_conditions cc ON c.id = cc.card_id ";
+    }
+
+    $query .= "WHERE 1=1 ";
+    $params = [];
+
+    // Ajouter les conditions de filtrage
+    if ($seriesId) {
+        $query .= "AND c.series_id = ? ";
+        $params[] = $seriesId;
+    }
+
+    if ($condition) {
+        $query .= "AND cc.condition_code = ? ";
+        $params[] = $condition;
+    }
+
+    if (!empty($search)) {
+        $query .= "AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ?) ";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
+
+    // Gestion spéciale pour le tri par prix ou quantité (nécessite une jointure)
+    if ($sortBy == 'price' || $sortBy == 'quantity') {
+        if (strpos($query, "JOIN card_conditions") === false) {
+            $query = str_replace("WHERE 1=1", "LEFT JOIN card_conditions ON c.id = card_conditions.card_id WHERE 1=1", $query);
+        }
+
+        // Grouper par ID de carte pour éviter les doublons
+        $query .= "GROUP BY c.id ";
+
+        if ($sortBy == 'price') {
+            $query .= "ORDER BY MIN(card_conditions.price) " . $sortOrder;
+        } else { // quantity
+            $query .= "ORDER BY SUM(card_conditions.quantity) " . $sortOrder;
+        }
     } else {
+        $query .= "ORDER BY c." . $sortBy . " " . $sortOrder;
+    }
+
+    // Ajouter la pagination
+    $query .= " LIMIT ?, ?";
+    $params[] = (int)$offset;
+    $params[] = (int)$perPage;
+
+    try {
+        $stmt = $conn->prepare($query);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    } catch (PDOException $e) {
+        // En cas d'erreur, journaliser l'erreur et retourner un tableau vide
+        error_log("Erreur SQL dans getFilteredCards: " . $e->getMessage() . " - Requête: " . $query);
+        return [];
+    }
+}
+
+// Récupérer le nombre total de cartes correspondant aux filtres
+$totalCards = countFilteredCards($seriesId, $condition, $search);
+$totalPages = ceil($totalCards / $perPage);
+
+// Récupérer les cartes selon les filtres et la pagination
+$cards = getFilteredCards($seriesId, $condition, $search, $sortBy, $sortOrder, $offset, $perPage);
+
+// Pour chaque carte, récupérer ses conditions disponibles
+$conn = getDbConnection();
+foreach ($cards as &$card) {
+    try {
+        // Récupérer toutes les conditions disponibles
+        $condQuery = "SELECT * FROM card_conditions WHERE card_id = ?";
+        $condParams = [$card['id']];
+
+        // Filtrer par état spécifique si demandé
+        if ($condition) {
+            $condQuery .= " AND condition_code = ?";
+            $condParams[] = $condition;
+        }
+
+        $condQuery .= " ORDER BY price ASC";
+
+        $condStmt = $conn->prepare($condQuery);
+        $condStmt->execute($condParams);
+        $cardConditions = $condStmt->fetchAll();
+
+        // Compter le nombre d'états disponibles
+        $conditionCount = count($cardConditions);
+
+        if ($conditionCount > 0) {
+            // Prendre le meilleur prix pour l'affichage
+            $bestCondition = $cardConditions[0]; // Déjà trié par prix ASC
+
+            $card['condition_code'] = $conditionCount > 1 ? 'multiple' : $bestCondition['condition_code'];
+            $card['price'] = $bestCondition['price'];
+            $card['quantity'] = array_sum(array_column($cardConditions, 'quantity'));
+            $card['condition_count'] = $conditionCount;
+            $card['conditions'] = $cardConditions;
+        } else {
+            $card['condition_code'] = "";
+            $card['price'] = 0;
+            $card['quantity'] = 0;
+            $card['condition_count'] = 0;
+            $card['conditions'] = [];
+        }
+    } catch (PDOException $e) {
+        // En cas d'erreur, journaliser et continuer avec des valeurs par défaut
+        error_log("Erreur SQL lors de la récupération des conditions pour la carte ID " . $card['id'] . ": " . $e->getMessage());
         $card['condition_code'] = "";
         $card['price'] = 0;
         $card['quantity'] = 0;
