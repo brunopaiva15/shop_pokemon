@@ -5,6 +5,19 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Définir la fonction sanitizeInput - DÉPLACÉE ICI POUR ÊTRE DÉFINIE AVANT UTILISATION
+function sanitizeInput($input)
+{
+    // Supprimer les espaces en début et fin de chaîne
+    $input = trim($input);
+    // Supprimer les balises HTML et PHP
+    $input = strip_tags($input);
+    // Convertir les caractères spéciaux en entités HTML
+    $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+
+    return $input;
+}
+
 // Définir le titre de la page
 $pageTitle = 'Gestion des cartes';
 
@@ -41,18 +54,6 @@ list($sortBy, $sortOrder) = $sortOptions[$sort];
 
 // Inclure l'en-tête
 require_once 'includes/header.php';
-
-function sanitizeInput($input)
-{
-    // Supprimer les espaces en début et fin de chaîne
-    $input = trim($input);
-    // Supprimer les balises HTML et PHP
-    $input = strip_tags($input);
-    // Convertir les caractères spéciaux en entités HTML
-    $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
-
-    return $input;
-}
 
 // Récupérer toutes les séries pour les filtres
 $allSeries = getAllSeries();
