@@ -1,4 +1,8 @@
 <?php
+// Show all errors for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // admin/includes/header.php
 session_start();
 require_once __DIR__ . '/../../includes/functions.php';
