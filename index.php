@@ -62,53 +62,76 @@ if ($currentSeries) {
 // Récupérer le nombre total de cartes d'abord (sans pagination)
 $totalCardsBeforeFilters = countAllCards($seriesId, $condition);
 
-// Récupérer les cartes filtrées (sans limite pour appliquer les autres filtres)
-$allFilteredCards = getAllCardsWithoutPagination($seriesId, $condition, $sortBy, $sortOrder);
+// MODIFICATION : Nouvelle fonction pour obtenir toutes les cartes filtrées en une seule requête
+function getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder)
+{
+    $conn = getDbConnection();
 
-// Appliquer les filtres supplémentaires
-// Filtrer par rareté si spécifiée
-if ($rarity) {
-    $filteredCards = [];
-    foreach ($allFilteredCards as $card) {
-        if ($card['rarity'] === $rarity) {
-            $filteredCards[] = $card;
-        }
+    // Construire la requête de base
+    $query = "
+        SELECT c.*, s.name as series_name, MIN(cc.price) as price
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+        JOIN card_conditions cc ON c.id = cc.card_id
+        WHERE cc.quantity > 0";
+    $params = [];
+
+    // Ajouter les conditions de filtrage
+    if ($seriesId) {
+        $query .= " AND c.series_id = ?";
+        $params[] = $seriesId;
     }
-    $allFilteredCards = $filteredCards;
+
+    if ($condition) {
+        $query .= " AND cc.condition_code = ?";
+        $params[] = $condition;
+    }
+
+    if ($rarity) {
+        $query .= " AND c.rarity = ?";
+        $params[] = $rarity;
+    }
+
+    if ($variant) {
+        $query .= " AND c.variant = ?";
+        $params[] = $variant;
+    }
+
+    // Regrouper par carte pour éviter les doublons
+    $query .= " GROUP BY c.id";
+
+    // Ajouter les filtres de prix après GROUP BY avec HAVING
+    if ($priceMin !== null) {
+        $query .= " HAVING MIN(cc.price) >= ?";
+        $params[] = $priceMin;
+    }
+
+    if ($priceMax !== null) {
+        if ($priceMin !== null) {
+            $query .= " AND MIN(cc.price) <= ?";
+        } else {
+            $query .= " HAVING MIN(cc.price) <= ?";
+        }
+        $params[] = $priceMax;
+    }
+
+    // Ajouter le tri
+    if ($sortBy == 'price') {
+        // Pour le tri par prix, on utilise le prix minimum de chaque carte
+        $query .= " ORDER BY price " . $sortOrder;
+    } else {
+        $query .= " ORDER BY c." . $sortBy . " " . $sortOrder;
+    }
+
+    // Exécuter la requête
+    $stmt = $conn->prepare($query);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll();
 }
 
-// Filtrer par variante si spécifiée
-if ($variant) {
-    $filteredCards = [];
-    foreach ($allFilteredCards as $card) {
-        if ($card['variant'] === $variant) {
-            $filteredCards[] = $card;
-        }
-    }
-    $allFilteredCards = $filteredCards;
-}
-
-// Filtrer par prix si spécifié
-if ($priceMin !== null || $priceMax !== null) {
-    $filteredCards = [];
-    foreach ($allFilteredCards as $card) {
-        $price = (float)$card['price'];
-        $priceOk = true;
-
-        if ($priceMin !== null && $price < $priceMin) {
-            $priceOk = false;
-        }
-
-        if ($priceMax !== null && $price > $priceMax) {
-            $priceOk = false;
-        }
-
-        if ($priceOk) {
-            $filteredCards[] = $card;
-        }
-    }
-    $allFilteredCards = $filteredCards;
-}
+// Récupérer toutes les cartes filtrées en une seule requête
+$allFilteredCards = getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder);
 
 // Compter le nombre total après tous les filtres
 $totalCards = count($allFilteredCards);
@@ -118,16 +141,18 @@ $cards = array_slice($allFilteredCards, $offset, $perPage);
 
 // Pour chaque carte, récupérer tous ses états disponibles
 $conn = getDbConnection();
-foreach ($cards as $i => $card) {
+foreach ($cards as &$card) {
+    // Récupérer tous les états disponibles pour cette carte
     $stmt = $conn->prepare("
         SELECT * FROM card_conditions 
         WHERE card_id = ? AND quantity > 0
         ORDER BY price ASC
     ");
     $stmt->execute([$card['id']]);
-    // On écrit directement dans $cards[$i], pas dans $card
-    $cards[$i]['available_conditions'] = $stmt->fetchAll();
+    $card['available_conditions'] = $stmt->fetchAll();
 }
+// CORRECTION : Libérer la référence pour éviter les doublons
+unset($card);
 
 $totalPages = ceil($totalCards / $perPage);
 
