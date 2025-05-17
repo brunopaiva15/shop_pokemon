@@ -1,14 +1,19 @@
 <?php
 // search.php
 
+// Inclure les fichiers nécessaires
+require_once 'includes/functions.php';
+
 // Vérifier si un terme de recherche est fourni
 if (!isset($_GET['q']) || empty($_GET['q'])) {
     header('Location: index.php');
     exit;
 }
 
-// Inclure les fichiers nécessaires
-require_once 'includes/functions.php';
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    header('Location: auth.php');
+    exit;
+}
 
 $searchTerm = sanitizeInput($_GET['q']);
 
@@ -25,83 +30,162 @@ $offset = ($page - 1) * $perPage;
 
 $seriesId = isset($_GET['series']) ? (int)$_GET['series'] : null;
 $condition = isset($_GET['condition']) ? $_GET['condition'] : null;
+$rarity = isset($_GET['rarity']) ? $_GET['rarity'] : null;
+$variant = isset($_GET['variant']) ? $_GET['variant'] : null;
 $priceMin = isset($_GET['price_min']) && is_numeric($_GET['price_min']) ? (float)$_GET['price_min'] : null;
 $priceMax = isset($_GET['price_max']) && is_numeric($_GET['price_max']) ? (float)$_GET['price_max'] : null;
+
+// Déterminer le tri
+$sortOptions = [
+    'number_asc'  => ['card_number', 'ASC'],
+    'number_desc' => ['card_number', 'DESC'],
+    'newest'      => ['created_at',   'DESC'],
+    'oldest'      => ['created_at',   'ASC'],
+    'price_low'   => ['price',        'ASC'],
+    'price_high'  => ['price',        'DESC'],
+    'name_asc'    => ['name',         'ASC'],
+    'name_desc'   => ['name',         'DESC']
+];
+
+// Définir 'number_asc' comme tri par défaut
+$sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions)
+    ? $_GET['sort']
+    : 'number_asc';
+
+list($sortBy, $sortOrder) = $sortOptions[$sort];
 
 // Inclure l'en-tête
 require_once 'includes/header.php';
 
-// Récupérer les résultats de recherche
-$searchResults = searchCards($searchTerm, $seriesId);
+// Récupérer toutes les séries pour les filtres
+$allSeries = getSeriesWithCards();
 
-// Filtrer les résultats en fonction des autres critères
-if ($priceMin !== null || $priceMax !== null || $condition !== null) {
-    $filteredResults = [];
+// MODIFICATION : Nouvelle fonction pour obtenir toutes les cartes recherchées filtrées en une seule requête
+function getSearchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder)
+{
+    $conn = getDbConnection();
 
-    foreach ($searchResults as $card) {
-        $priceOk = true;
-        $conditionOk = true;
+    // Construire la requête de base
+    $query = "
+        SELECT c.*, s.name as series_name, MIN(cc.price) as price
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+        JOIN card_conditions cc ON c.id = cc.card_id
+        WHERE cc.quantity > 0 
+        AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ?)";
 
-        if ($priceMin !== null && $card['price'] < $priceMin) {
-            $priceOk = false;
-        }
+    $searchParam = '%' . $searchTerm . '%';
+    $params = [$searchParam, $searchParam, $searchParam];
 
-        if ($priceMax !== null && $card['price'] > $priceMax) {
-            $priceOk = false;
-        }
-
-        if ($condition !== null && $card['condition'] !== $condition) {
-            $conditionOk = false;
-        }
-
-        if ($priceOk && $conditionOk) {
-            $filteredResults[] = $card;
-        }
+    // Ajouter les conditions de filtrage
+    if ($seriesId) {
+        $query .= " AND c.series_id = ?";
+        $params[] = $seriesId;
     }
 
-    $searchResults = $filteredResults;
+    if ($condition) {
+        $query .= " AND cc.condition_code = ?";
+        $params[] = $condition;
+    }
+
+    if ($rarity) {
+        $query .= " AND c.rarity = ?";
+        $params[] = $rarity;
+    }
+
+    if ($variant) {
+        $query .= " AND c.variant = ?";
+        $params[] = $variant;
+    }
+
+    // Regrouper par carte pour éviter les doublons
+    $query .= " GROUP BY c.id";
+
+    // Ajouter les filtres de prix après GROUP BY avec HAVING
+    if ($priceMin !== null) {
+        $query .= " HAVING MIN(cc.price) >= ?";
+        $params[] = $priceMin;
+    }
+
+    if ($priceMax !== null) {
+        if ($priceMin !== null) {
+            $query .= " AND MIN(cc.price) <= ?";
+        } else {
+            $query .= " HAVING MIN(cc.price) <= ?";
+        }
+        $params[] = $priceMax;
+    }
+
+    // Ajouter le tri
+    if ($sortBy == 'price') {
+        // Pour le tri par prix, on utilise le prix minimum de chaque carte
+        $query .= " ORDER BY price " . $sortOrder;
+    } else {
+        $query .= " ORDER BY c." . $sortBy . " " . $sortOrder;
+    }
+
+    // Exécuter la requête
+    $stmt = $conn->prepare($query);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll();
 }
 
-// Déterminer le tri
-$sortOptions = [
-    'newest' => function ($a, $b) {
-        return strtotime($b['created_at']) - strtotime($a['created_at']);
-    },
-    'oldest' => function ($a, $b) {
-        return strtotime($a['created_at']) - strtotime($b['created_at']);
-    },
-    'price_low' => function ($a, $b) {
-        return $a['price'] - $b['price'];
-    },
-    'price_high' => function ($a, $b) {
-        return $b['price'] - $a['price'];
-    },
-    'name_asc' => function ($a, $b) {
-        return strcmp($a['name'], $b['name']);
-    },
-    'name_desc' => function ($a, $b) {
-        return strcmp($b['name'], $a['name']);
-    }
-];
+// Récupérer toutes les cartes filtrées en une seule requête
+$allSearchResults = getSearchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder);
 
-$sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions) ? $_GET['sort'] : 'newest';
-
-// Trier les résultats
-usort($searchResults, $sortOptions[$sort]);
+// Compter le nombre total après tous les filtres
+$totalResults = count($allSearchResults);
 
 // Paginer les résultats
-$totalResults = count($searchResults);
-$totalPages = ceil($totalResults / $perPage);
-$paginatedResults = array_slice($searchResults, $offset, $perPage);
+$paginatedResults = array_slice($allSearchResults, $offset, $perPage);
 
-// Récupérer toutes les séries pour les filtres
-$allSeries = getAllSeries();
+// Pour chaque carte, récupérer tous ses états disponibles
+$conn = getDbConnection();
+foreach ($paginatedResults as &$card) {
+    // Récupérer tous les états disponibles pour cette carte
+    $stmt = $conn->prepare("
+        SELECT * FROM card_conditions 
+        WHERE card_id = ? AND quantity > 0
+        ORDER BY price ASC
+    ");
+    $stmt->execute([$card['id']]);
+    $card['available_conditions'] = $stmt->fetchAll();
+}
+// Libérer la référence pour éviter les doublons
+unset($card);
+
+$totalPages = ceil($totalResults / $perPage);
 
 // Générer les paramètres d'URL pour la pagination
 $paginationParams = $_GET;
 unset($paginationParams['page']); // Supprimer le paramètre de page existant
 $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 ?>
+
+<!-- Bandeau pour dire que toutes les cartes sont livrées avec un sleeve -->
+<div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-6">
+    <div class="flex flex-wrap justify-between items-center">
+        <div>
+            <i class="fas fa-info-circle mr-2"></i>
+            Toutes les cartes sont livrées dans une sleeve de protection ! Pour les cartes de plus de 2.00 CHF, un toploader est également inclus.
+        </div>
+        <button id="show-condition-guide" class="mt-2 sm:mt-0 text-blue-600 hover:text-blue-800 underline">
+            <i class="fas fa-question-circle mr-1"></i> Guide des états de cartes (<small>MT, NM...</small>)
+        </button>
+    </div>
+</div>
+
+<!-- Modal pour afficher le guide des états des cartes -->
+<div id="condition-guide-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg p-4 max-w-3xl mx-4 relative">
+        <button id="close-condition-guide" class="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        <h3 class="text-xl font-bold mb-4">Guide des états des cartes</h3>
+        <img src="assets/images/Card_Condition_Table_FR.png" alt="Guide des états des cartes" class="w-full">
+    </div>
+</div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
     <!-- Sidebar avec filtres -->
@@ -127,6 +211,34 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                     <?php foreach ($allSeries as $series): ?>
                         <option value="<?php echo $series['id']; ?>" <?php echo $seriesId == $series['id'] ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($series['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-container mb-6">
+            <h3 class="filter-title">Filtrer par rareté</h3>
+            <div class="filter-content">
+                <select id="rarity-filter" class="w-full p-2 border border-gray-300 rounded-md">
+                    <option value="">Toutes les raretés</option>
+                    <?php foreach (CARD_RARITIES as $code => $name): ?>
+                        <option value="<?php echo $code; ?>" <?php echo $rarity == $code ? 'selected' : ''; ?>>
+                            <?php echo $name; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-container mb-6">
+            <h3 class="filter-title">Filtrer par variante</h3>
+            <div class="filter-content">
+                <select id="variant-filter" class="w-full p-2 border border-gray-300 rounded-md">
+                    <option value="">Toutes les variantes</option>
+                    <?php foreach (CARD_VARIANTS as $code => $name): ?>
+                        <option value="<?php echo $code; ?>" <?php echo isset($_GET['variant']) && $_GET['variant'] == $code ? 'selected' : ''; ?>>
+                            <?php echo $name; ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -179,12 +291,14 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             <h3 class="filter-title">Trier par</h3>
             <div class="filter-content">
                 <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md">
-                    <option value="newest" <?php echo $sort == 'newest' ? 'selected' : ''; ?>>Plus récent</option>
-                    <option value="oldest" <?php echo $sort == 'oldest' ? 'selected' : ''; ?>>Plus ancien</option>
-                    <option value="price_low" <?php echo $sort == 'price_low' ? 'selected' : ''; ?>>Prix croissant</option>
-                    <option value="price_high" <?php echo $sort == 'price_high' ? 'selected' : ''; ?>>Prix décroissant</option>
-                    <option value="name_asc" <?php echo $sort == 'name_asc' ? 'selected' : ''; ?>>Nom (A-Z)</option>
-                    <option value="name_desc" <?php echo $sort == 'name_desc' ? 'selected' : ''; ?>>Nom (Z-A)</option>
+                    <option value="number_asc" <?= $sort == 'number_asc'  ? 'selected' : '' ?>>N° croissant</option>
+                    <option value="number_desc" <?= $sort == 'number_desc' ? 'selected' : '' ?>>N° décroissant</option>
+                    <option value="newest" <?= $sort == 'newest'      ? 'selected' : '' ?>>Plus récent</option>
+                    <option value="oldest" <?= $sort == 'oldest'      ? 'selected' : '' ?>>Plus ancien</option>
+                    <option value="price_low" <?= $sort == 'price_low'   ? 'selected' : '' ?>>Prix croissant</option>
+                    <option value="price_high" <?= $sort == 'price_high'  ? 'selected' : '' ?>>Prix décroissant</option>
+                    <option value="name_asc" <?= $sort == 'name_asc'    ? 'selected' : '' ?>>Nom (A-Z)</option>
+                    <option value="name_desc" <?= $sort == 'name_desc'   ? 'selected' : '' ?>>Nom (Z-A)</option>
                 </select>
             </div>
         </div>
@@ -228,7 +342,17 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <?php foreach ($paginatedResults as $card): ?>
                     <div class="card-item bg-white rounded-lg shadow-md overflow-hidden card-hover">
-                        <div class="card-image-zoom p-4 bg-gray-100">
+                        <div class="card-image-zoom p-4 bg-gray-100 relative">
+                            <?php
+                            $createdAt = strtotime($card['created_at']);
+                            $twoWeeksAgo = strtotime('-14 days');
+                            if ($createdAt !== false && $createdAt > $twoWeeksAgo):
+                            ?>
+                                <div class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow">
+                                    Nouveau
+                                </div>
+                            <?php endif; ?>
+
                             <a href="card-details.php?id=<?php echo $card['id']; ?>">
                                 <img src="<?php echo $card['image_url'] ?: 'assets/images/card-placeholder.png'; ?>"
                                     alt="<?php echo htmlspecialchars($card['name']); ?>"
@@ -243,28 +367,62 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                         <?php echo htmlspecialchars($card['name']); ?>
                                     </a>
                                 </h3>
-                                <?php
-                                $cardCondition = isset($card['card_condition']) ? $card['card_condition'] : '';
-                                $conditionName = isset(CARD_CONDITIONS[$cardCondition]) ? CARD_CONDITIONS[$cardCondition] : 'Inconnu';
-                                ?>
-                                <span class="condition-badge condition-<?php echo htmlspecialchars($cardCondition); ?>">
-                                    <?php echo htmlspecialchars($conditionName); ?>
-                                </span>
+
+                                <?php if (count($card['available_conditions']) > 1): ?>
+                                    <span class="condition-badge condition-multiple">
+                                        Multiple
+                                    </span>
+                                <?php elseif (isset($card['card_condition']) && !empty($card['card_condition'])): ?>
+                                    <span class="condition-badge condition-<?php echo $card['card_condition']; ?>">
+                                        <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
 
                             <div class="text-sm text-gray-500 mb-3">
                                 <div>Série: <?php echo htmlspecialchars($card['series_name']); ?></div>
                                 <div>N°: <?php echo htmlspecialchars($card['card_number']); ?></div>
-                                <div>Rareté: <?php echo htmlspecialchars($card['rarity']); ?></div>
+                                <div>Rareté: <?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></div>
+                                <div>Variante: <?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></div>
                             </div>
 
-                            <div class="flex justify-between items-center">
-                                <div class="font-bold text-xl text-red-600"><?php echo formatPrice($card['price']); ?></div>
+                            <?php if (!empty($card['available_conditions'])): ?>
+                                <!-- États disponibles -->
+                                <div class="mb-3">
+                                    <p class="text-sm font-medium text-gray-700 mb-1">États disponibles:</p>
+                                    <div class="flex flex-wrap gap-1">
+                                        <?php foreach ($card['available_conditions'] as $condition): ?>
+                                            <div class="text-xs condition-badge condition-<?php echo $condition['condition_code']; ?>">
+                                                <?php echo CARD_CONDITIONS[$condition['condition_code']]; ?>
+                                                <span class="font-semibold"><?php echo formatPrice($condition['price']); ?></span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
 
-                                <?php if ($card['quantity'] > 0): ?>
-                                    <button data-card-id="<?php echo $card['id']; ?>" class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
+                            <div class="flex justify-between items-center">
+                                <div class="font-bold text-xl text-red-600">
+                                    <?php if (count($card['available_conditions']) > 1): ?>
+                                        À partir de <?php echo formatPrice($card['price']); ?>
+                                    <?php else: ?>
+                                        <?php echo formatPrice($card['price']); ?>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (!empty($card['available_conditions']) && count($card['available_conditions']) === 1): ?>
+                                    <!-- Un seul état disponible -->
+                                    <button
+                                        data-card-id="<?php echo $card['id']; ?>"
+                                        data-condition="<?php echo $card['available_conditions'][0]['condition_code']; ?>"
+                                        class="add-to-cart bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
                                         <i class="fas fa-shopping-cart mr-1"></i> Ajouter
                                     </button>
+                                <?php elseif (!empty($card['available_conditions']) && count($card['available_conditions']) > 1): ?>
+                                    <!-- Plusieurs états disponibles -->
+                                    <a href="card-details.php?id=<?php echo $card['id']; ?>" class="bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
+                                        <i class="fas fa-eye mr-1"></i> Voir
+                                    </a>
                                 <?php else: ?>
                                     <span class="bg-gray-300 text-gray-600 py-2 px-4 rounded-md">
                                         Indisponible
@@ -311,6 +469,220 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <?php endif; ?>
     </div>
 </div>
+
+<style>
+    .condition-badge.condition-multiple {
+        background-color: #9333ea;
+        color: white;
+    }
+</style>
+
+<script>
+    // Script pour la gestion des filtres
+    document.addEventListener('DOMContentLoaded', function() {
+        // Référence aux éléments de filtre
+        const seriesFilter = document.getElementById('series-filter');
+        const conditionFilter = document.getElementById('condition-filter');
+        const rarityFilter = document.getElementById('rarity-filter');
+        const variantFilter = document.getElementById('variant-filter');
+        const priceMinFilter = document.getElementById('price-min');
+        const priceMaxFilter = document.getElementById('price-max');
+        const sortFilter = document.getElementById('sort-filter');
+
+        // Boutons pour appliquer et réinitialiser les filtres
+        const applyButton = document.getElementById('apply-filters');
+        const resetButton = document.getElementById('reset-filters');
+
+        // Fonction pour appliquer les filtres
+        window.applyFilters = function() {
+            const params = new URLSearchParams(window.location.search);
+
+            // Conserver le terme de recherche
+            const searchQuery = params.get('q');
+            if (searchQuery) {
+                params.set('q', searchQuery);
+            }
+
+            // Mettre à jour les paramètres d'URL avec les valeurs des filtres
+            updateUrlParam(params, 'series', seriesFilter.value);
+            updateUrlParam(params, 'condition', conditionFilter.value);
+            updateUrlParam(params, 'rarity', rarityFilter.value);
+            updateUrlParam(params, 'variant', variantFilter.value);
+            updateUrlParam(params, 'sort', sortFilter.value);
+            updateUrlParam(params, 'price_min', priceMinFilter.value);
+            updateUrlParam(params, 'price_max', priceMaxFilter.value);
+
+            // Rediriger vers la nouvelle URL
+            window.location.href = window.location.pathname + '?' + params.toString();
+        };
+
+        // Fonction pour réinitialiser les filtres
+        window.resetFilters = function() {
+            // Réinitialiser tous les champs de filtre
+            seriesFilter.value = '';
+            conditionFilter.value = '';
+            rarityFilter.value = '';
+            variantFilter.value = '';
+            sortFilter.value = 'number_asc';
+            priceMinFilter.value = '';
+            priceMaxFilter.value = '';
+
+            // Conserver uniquement le paramètre de recherche
+            const params = new URLSearchParams();
+            const searchQuery = (new URLSearchParams(window.location.search)).get('q');
+
+            if (searchQuery) {
+                params.set('q', searchQuery);
+                window.location.href = window.location.pathname + '?' + params.toString();
+            } else {
+                window.location.href = 'index.php';
+            }
+        };
+
+        // Fonction pour mettre à jour un paramètre d'URL
+        function updateUrlParam(params, key, value) {
+            if (value) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        }
+
+        // Associer les fonctions aux boutons
+        if (applyButton) {
+            applyButton.addEventListener('click', applyFilters);
+        }
+
+        if (resetButton) {
+            resetButton.addEventListener('click', resetFilters);
+        }
+
+        // Gestion de la fenêtre modale pour le guide des états des cartes
+        const showButton = document.getElementById('show-condition-guide');
+        const closeButton = document.getElementById('close-condition-guide');
+        const modal = document.getElementById('condition-guide-modal');
+
+        if (showButton && modal && closeButton) {
+            showButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Empêcher le défilement du fond
+            });
+
+            closeButton.addEventListener('click', function() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = ''; // Réactiver le défilement
+            });
+
+            // Fermer également en cliquant en dehors de l'image
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // Fermer avec la touche Echap
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+
+        // Gestion du bouton mobile pour afficher/masquer les filtres
+        const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
+        const filterSidebar = document.getElementById('filter-sidebar');
+
+        if (mobileFilterToggle && filterSidebar) {
+            mobileFilterToggle.addEventListener('click', function() {
+                filterSidebar.classList.toggle('hidden');
+                mobileFilterToggle.innerHTML = filterSidebar.classList.contains('hidden') ?
+                    '<i class="fas fa-filter mr-1"></i> Filtres' :
+                    '<i class="fas fa-times mr-1"></i> Masquer';
+            });
+        }
+
+        // Gestion des boutons d'ajout au panier
+        const addToCartButtons = document.querySelectorAll('.add-to-cart');
+
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const cardId = this.dataset.cardId;
+                const condition = this.dataset.condition;
+
+                // Animation
+                this.classList.add('add-to-cart-pulse');
+                setTimeout(() => {
+                    this.classList.remove('add-to-cart-pulse');
+                }, 500);
+
+                // Requête AJAX pour ajouter au panier
+                fetch('cart-ajax.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `action=add&card_id=${cardId}&condition=${condition}&quantity=1`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mettre à jour l'icône du panier
+                            const cartCountElement = document.querySelector('.fa-shopping-cart')?.nextElementSibling;
+                            if (cartCountElement) {
+                                cartCountElement.textContent = data.cart_count;
+                            } else {
+                                const cartIcon = document.querySelector('.fa-shopping-cart');
+                                if (cartIcon?.parentNode) {
+                                    const countSpan = document.createElement('span');
+                                    countSpan.className = 'absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs';
+                                    countSpan.textContent = data.cart_count;
+                                    cartIcon.parentNode.appendChild(countSpan);
+                                }
+                            }
+
+                            // Afficher une notification
+                            showNotification('Carte ajoutée au panier !', 'success');
+                        } else {
+                            showNotification('Erreur: ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showNotification('Une erreur est survenue', 'error');
+                    });
+            });
+        });
+
+        // Fonction pour afficher des notifications
+        function showNotification(message, type) {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
+                    } mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('opacity-0');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    });
+</script>
 
 <?php
 // Inclure le pied de page
