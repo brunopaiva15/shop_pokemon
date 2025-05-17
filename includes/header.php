@@ -1,6 +1,6 @@
 <?php
-// Hide all errors
-error_reporting(1);
+// Show all errors for debugging
+error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // includes/header.php
