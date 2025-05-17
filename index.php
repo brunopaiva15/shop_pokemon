@@ -59,103 +59,124 @@ if ($currentSeries) {
     $pageTitle = 'Série : ' . htmlspecialchars($currentSeries['name']);
 }
 
-// Récupérer le nombre total de cartes d'abord (sans pagination)
-$totalCardsBeforeFilters = countAllCards($seriesId, $condition);
-
-// MODIFICATION : Nouvelle fonction pour obtenir toutes les cartes filtrées en une seule requête
-function getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder)
+/**
+ * Récupère les cartes filtrées avec pagination directement dans la base de données
+ */
+function getFilteredCardsWithPagination($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder, $offset, $perPage)
 {
     $conn = getDbConnection();
 
-    // Construire la requête de base
-    $query = "
-        SELECT c.*, s.name as series_name, MIN(cc.price) as price
+    // 1. Récupérer d'abord les IDs de cartes uniques qui correspondent aux critères
+    $idsQuery = "
+        SELECT DISTINCT c.id
         FROM cards c 
-        LEFT JOIN series s ON c.series_id = s.id 
         JOIN card_conditions cc ON c.id = cc.card_id
         WHERE cc.quantity > 0";
     $params = [];
 
     // Ajouter les conditions de filtrage
     if ($seriesId) {
-        $query .= " AND c.series_id = ?";
+        $idsQuery .= " AND c.series_id = ?";
         $params[] = $seriesId;
     }
 
     if ($condition) {
-        $query .= " AND cc.condition_code = ?";
+        $idsQuery .= " AND cc.condition_code = ?";
         $params[] = $condition;
     }
 
     if ($rarity) {
-        $query .= " AND c.rarity = ?";
+        $idsQuery .= " AND c.rarity = ?";
         $params[] = $rarity;
     }
 
     if ($variant) {
-        $query .= " AND c.variant = ?";
+        $idsQuery .= " AND c.variant = ?";
         $params[] = $variant;
     }
 
-    // Regrouper par carte pour éviter les doublons
-    $query .= " GROUP BY c.id";
+    // Les filtres de prix doivent être appliqués au niveau de la carte
+    if ($priceMin !== null || $priceMax !== null) {
+        $idsQuery .= " GROUP BY c.id";
 
-    // Ajouter les filtres de prix après GROUP BY avec HAVING
-    if ($priceMin !== null) {
-        $query .= " HAVING MIN(cc.price) >= ?";
-        $params[] = $priceMin;
-    }
-
-    if ($priceMax !== null) {
         if ($priceMin !== null) {
-            $query .= " AND MIN(cc.price) <= ?";
-        } else {
-            $query .= " HAVING MIN(cc.price) <= ?";
+            $idsQuery .= " HAVING MIN(cc.price) >= ?";
+            $params[] = $priceMin;
         }
-        $params[] = $priceMax;
-    }
 
-    // Ajouter le tri
-    if ($sortBy == 'price') {
-        // Pour le tri par prix, on utilise le prix minimum de chaque carte
-        $query .= " ORDER BY price " . $sortOrder;
-    } else {
-        $query .= " ORDER BY c." . $sortBy . " " . $sortOrder;
-    }
-
-    try {
-        // Exécuter la requête
-        $stmt = $conn->prepare($query);
-        $stmt->execute($params);
-        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Vérifier les doublons dans le résultat
-        $uniqueIds = [];
-        $uniqueResults = [];
-
-        foreach ($result as $card) {
-            if (!in_array($card['id'], $uniqueIds)) {
-                $uniqueIds[] = $card['id'];
-                $uniqueResults[] = $card;
+        if ($priceMax !== null) {
+            if ($priceMin !== null) {
+                $idsQuery .= " AND MIN(cc.price) <= ?";
+            } else {
+                $idsQuery .= " HAVING MIN(cc.price) <= ?";
             }
+            $params[] = $priceMax;
         }
-
-        return $uniqueResults;
-    } catch (PDOException $e) {
-        // Log l'erreur et retourner un tableau vide
-        error_log("Erreur SQL dans getAllFilteredCards: " . $e->getMessage() . " - Requête: " . $query);
-        return [];
     }
+
+    // Ajouter le tri et la pagination pour les IDs
+    if ($sortBy == 'price') {
+        $idsQuery .= " ORDER BY MIN(cc.price) " . $sortOrder;
+    } else {
+        $idsQuery .= " ORDER BY c." . $sortBy . " " . $sortOrder;
+    }
+
+    $idsQuery .= " LIMIT ?, ?";
+    $params[] = (int)$offset;
+    $params[] = (int)$perPage;
+
+    $stmt = $conn->prepare($idsQuery);
+    $stmt->execute($params);
+    $cardIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if (empty($cardIds)) {
+        return [
+            'total' => 0,
+            'cards' => []
+        ];
+    }
+
+    // 2. Compter le nombre total de cartes qui correspondent aux critères (sans pagination)
+    $countQuery = str_replace(
+        "SELECT DISTINCT c.id",
+        "SELECT COUNT(DISTINCT c.id) as total",
+        preg_replace("/LIMIT \?, \?/", "", $idsQuery)
+    );
+    $countParams = array_slice($params, 0, -2); // Supprimer les paramètres de pagination
+
+    $stmt = $conn->prepare($countQuery);
+    $stmt->execute($countParams);
+    $totalCount = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    // 3. Récupérer les détails complets des cartes
+    $placeholders = implode(',', array_fill(0, count($cardIds), '?'));
+    $cardsQuery = "
+        SELECT c.*, s.name as series_name,
+               (SELECT MIN(price) FROM card_conditions WHERE card_id = c.id AND quantity > 0) as price
+        FROM cards c 
+        LEFT JOIN series s ON c.series_id = s.id 
+        WHERE c.id IN ($placeholders)";
+
+    // Maintenir le même ordre que celui obtenu dans la première requête
+    $cardsQuery .= " ORDER BY FIELD(c.id, $placeholders)";
+
+    $stmt = $conn->prepare($cardsQuery);
+    $stmt->execute(array_merge($cardIds, $cardIds)); // Les placeholders sont utilisés deux fois
+    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    return [
+        'total' => $totalCount,
+        'cards' => $cards
+    ];
 }
 
-// Récupérer toutes les cartes filtrées en une seule requête
-$allFilteredCards = getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder);
+// Récupérer le nombre total de cartes sans filtres pour référence
+$totalCardsBeforeFilters = countAllCards($seriesId, $condition);
 
-// Compter le nombre total après tous les filtres
-$totalCards = count($allFilteredCards);
-
-// Paginer les résultats
-$cards = array_slice($allFilteredCards, $offset, $perPage);
+// Récupérer les cartes avec pagination côté base de données
+$result = getFilteredCardsWithPagination($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder, $offset, $perPage);
+$totalCards = $result['total'];
+$cards = $result['cards'];
 
 // Pour chaque carte, récupérer tous ses états disponibles
 $conn = getDbConnection();
