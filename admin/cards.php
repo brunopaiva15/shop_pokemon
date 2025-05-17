@@ -1,6 +1,10 @@
 <?php
 // admin/cards.php
 
+// Show all errors for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Définir le titre de la page
 $pageTitle = 'Gestion des cartes';
 
