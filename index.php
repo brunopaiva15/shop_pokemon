@@ -4,6 +4,8 @@
 // Inclure le fichier de fonctions explicitement
 require_once 'includes/functions.php';
 
+session_start();
+
 if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     header('Location: auth.php');
     exit;
