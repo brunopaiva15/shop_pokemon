@@ -123,11 +123,29 @@ function getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin
         $query .= " ORDER BY c." . $sortBy . " " . $sortOrder;
     }
 
-    // Exécuter la requête
-    $stmt = $conn->prepare($query);
-    $stmt->execute($params);
+    try {
+        // Exécuter la requête
+        $stmt = $conn->prepare($query);
+        $stmt->execute($params);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    return $stmt->fetchAll();
+        // Vérifier les doublons dans le résultat
+        $uniqueIds = [];
+        $uniqueResults = [];
+
+        foreach ($result as $card) {
+            if (!in_array($card['id'], $uniqueIds)) {
+                $uniqueIds[] = $card['id'];
+                $uniqueResults[] = $card;
+            }
+        }
+
+        return $uniqueResults;
+    } catch (PDOException $e) {
+        // Log l'erreur et retourner un tableau vide
+        error_log("Erreur SQL dans getAllFilteredCards: " . $e->getMessage() . " - Requête: " . $query);
+        return [];
+    }
 }
 
 // Récupérer toutes les cartes filtrées en une seule requête
