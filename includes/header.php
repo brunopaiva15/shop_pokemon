@@ -1,7 +1,7 @@
 <?php
-// Show all errors for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Cacher les erreurs pour la production
+error_reporting(0);
+ini_set('display_errors', 0);
 
 // includes/header.php
 session_start();

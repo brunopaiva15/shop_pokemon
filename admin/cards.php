@@ -1,10 +1,6 @@
 <?php
 // admin/cards.php
 
-// Show all errors for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 // Inclure le fichier qui contient les fonctions utilitaires, dont sanitizeInput()
 require_once '../includes/functions.php';
 
