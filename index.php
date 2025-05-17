@@ -118,17 +118,16 @@ $cards = array_slice($allFilteredCards, $offset, $perPage);
 
 // Pour chaque carte, récupérer tous ses états disponibles
 $conn = getDbConnection();
-foreach ($cards as &$card) {
-    // Récupérer tous les états disponibles pour cette carte
+foreach ($cards as $i => $card) {
     $stmt = $conn->prepare("
         SELECT * FROM card_conditions 
         WHERE card_id = ? AND quantity > 0
         ORDER BY price ASC
     ");
     $stmt->execute([$card['id']]);
-    $card['available_conditions'] = $stmt->fetchAll();
+    // On écrit directement dans $cards[$i], pas dans $card
+    $cards[$i]['available_conditions'] = $stmt->fetchAll();
 }
-unset($card); // Libérer la référence
 
 $totalPages = ceil($totalCards / $perPage);
 
