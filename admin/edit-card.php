@@ -290,7 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="<?= $series['id'] ?>"
                                 data-code="<?= htmlspecialchars($series['code']) ?>"
                                 <?= ($card['series_id'] == $series['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($series['name']) ?>
+                                <?= htmlspecialchars($series['name']) ?> (<?= htmlspecialchars($series['code']) ?>)
                             </option>
                         <?php endforeach; ?>
                     </select>
