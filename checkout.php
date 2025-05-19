@@ -1,5 +1,6 @@
 <?php
 // checkout.php
+session_start();
 
 // Définir le titre de la page
 $pageTitle = 'Finaliser votre commande';

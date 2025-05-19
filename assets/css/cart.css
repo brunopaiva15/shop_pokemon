@@ -1,0 +1,95 @@
+/* assets/css/cart.css */
+
+/* Styles pour les badges d'état des cartes */
+.condition-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.condition-mt {
+    background-color: #10B981;
+    color: white;
+}
+
+.condition-nm {
+    background-color: #3B82F6;
+    color: white;
+}
+
+.condition-ex {
+    background-color: #8B5CF6;
+    color: white;
+}
+
+.condition-gd {
+    background-color: #F59E0B;
+    color: white;
+}
+
+.condition-lp {
+    background-color: #EF4444;
+    color: white;
+}
+
+.condition-mp {
+    background-color: #6B7280;
+    color: white;
+}
+
+.condition-hp {
+    background-color: #1F2937;
+    color: white;
+}
+
+/* Styles pour le sélecteur de quantité */
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    width: 100px;
+    border: 1px solid #E5E7EB;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.quantity-modifier {
+    width: 2rem;
+    height: 2rem;
+    background-color: #F3F4F6;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-modifier:hover {
+    background-color: #E5E7EB;
+}
+
+.quantity-input {
+    width: calc(100% - 4rem);
+    height: 2rem;
+    text-align: center;
+    border: none;
+    border-left: 1px solid #E5E7EB;
+    border-right: 1px solid #E5E7EB;
+    padding: 0;
+}
+
+.quantity-input:focus {
+    outline: none;
+}
+
+/* Animation pour les notifications */
+.notification {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.notification.opacity-0 {
+    opacity: 0;
+}

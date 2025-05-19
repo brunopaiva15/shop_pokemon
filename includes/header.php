@@ -20,8 +20,11 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- CSS personnalisé -->
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/custom.css">
+    <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/cart.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo SITE_URL; ?>/assets/images/favicon.ico" type="image/x-icon">
+    <!-- JavaScript -->
+    <script src="<?php echo SITE_URL; ?>/assets/js/cart.js"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -39,9 +42,11 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
                     <a href="<?php echo SITE_URL; ?>/cart.php" class="relative md:hidden">
                         <i class="fas fa-shopping-cart text-xl"></i>
                         <?php if (getCartItemCount() > 0): ?>
-                            <span class="absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                            <span class="cart-counter absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                                 <?php echo getCartItemCount(); ?>
                             </span>
+                        <?php else: ?>
+                            <span class="cart-counter absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hidden"></span>
                         <?php endif; ?>
                     </a>
                 </div>
@@ -71,9 +76,11 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
                     <a href="<?php echo SITE_URL; ?>/cart.php" class="relative">
                         <i class="fas fa-shopping-cart text-xl"></i>
                         <?php if (getCartItemCount() > 0): ?>
-                            <span class="absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                            <span class="cart-counter absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
                                 <?php echo getCartItemCount(); ?>
                             </span>
+                        <?php else: ?>
+                            <span class="cart-counter absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hidden"></span>
                         <?php endif; ?>
                     </a>
                 </div>
@@ -82,6 +89,6 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
     </header>
 
     <main class="flex-grow container mx-auto px-4 py-6">
-        <?php if (isset($pageTitle)): ?>
+        <?php if (isset($pageTitle) && $pageTitle != 'Accueil'): ?>
             <h1 class="text-3xl font-bold mb-6"><?php echo $pageTitle; ?></h1>
         <?php endif; ?>

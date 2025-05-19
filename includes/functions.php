@@ -489,7 +489,7 @@ function createUser($username, $password, $isAdmin = false)
     return $stmt->execute([$username, $hashedPassword, $isAdmin ? 1 : 0]);
 }
 
-// Fonctions pour le panier (utilisant les sessions)
+// Fonctions pour le panier
 function initCart()
 {
     if (!isset($_SESSION['cart'])) {
@@ -497,42 +497,59 @@ function initCart()
     }
 }
 
-function addToCart($cardId, $condition, $quantity = 1)
+function addToCart($cardId, $conditionCode, $quantity = 1)
 {
     initCart();
 
-    $key = $cardId . '|' . $condition;  // Clé composite pour identifier à la fois la carte et son état
+    // Vérifier que la carte existe et est disponible
+    $conn = getDbConnection();
+    $stmt = $conn->prepare("
+        SELECT c.*, s.name as series_name, cc.price, cc.quantity as available_quantity 
+        FROM cards c 
+        JOIN series s ON c.series_id = s.id
+        JOIN card_conditions cc ON c.id = cc.card_id
+        WHERE c.id = ? AND cc.condition_code = ?
+    ");
+    $stmt->execute([$cardId, $conditionCode]);
+    $card = $stmt->fetch();
 
-    if (isset($_SESSION['cart'][$key])) {
-        $_SESSION['cart'][$key] += $quantity;
-    } else {
-        $_SESSION['cart'][$key] = $quantity;
+    if (!$card || $card['available_quantity'] <= 0) {
+        return false;
     }
-}
 
-function updateCartItem($cardId, $condition, $quantity)
-{
-    initCart();
+    // Limiter la quantité au stock disponible
+    $quantity = min($quantity, $card['available_quantity']);
 
-    $key = $cardId . '|' . $condition;
+    // Générer un ID unique pour cet élément du panier
+    $cartItemId = uniqid();
 
-    if ($quantity <= 0) {
-        unset($_SESSION['cart'][$key]);
-    } else {
-        $_SESSION['cart'][$key] = $quantity;
+    // Vérifier si cette carte avec cet état est déjà dans le panier
+    $existingItemIndex = null;
+    foreach ($_SESSION['cart'] as $index => $item) {
+        if ($item['card_id'] == $cardId && $item['condition_code'] == $conditionCode) {
+            $existingItemIndex = $index;
+            $cartItemId = $item['id']; // Réutiliser l'ID existant
+            break;
+        }
     }
-}
 
-function removeFromCart($cardId, $condition)
-{
-    initCart();
-    $key = $cardId . '|' . $condition;
-    unset($_SESSION['cart'][$key]);
-}
+    if ($existingItemIndex !== null) {
+        // Mettre à jour la quantité
+        $newQuantity = $_SESSION['cart'][$existingItemIndex]['quantity'] + $quantity;
+        $newQuantity = min($newQuantity, $card['available_quantity']); // Limiter au stock disponible
+        $_SESSION['cart'][$existingItemIndex]['quantity'] = $newQuantity;
+    } else {
+        // Ajouter au panier
+        $_SESSION['cart'][] = [
+            'id' => $cartItemId,
+            'card_id' => $cardId,
+            'condition_code' => $conditionCode,
+            'quantity' => $quantity,
+            'price' => $card['price']
+        ];
+    }
 
-function clearCart()
-{
-    $_SESSION['cart'] = [];
+    return true;
 }
 
 function getCartItems()
@@ -543,71 +560,61 @@ function getCartItems()
         return [];
     }
 
+    $items = [];
     $conn = getDbConnection();
-    $cartItems = [];
 
-    foreach ($_SESSION['cart'] as $key => $quantity) {
-        // Assurez-vous que la clé a un format valide
-        if (strpos($key, '|') === false) {
-            continue; // Ignorer les clés invalides
-        }
-
-        // Extraire l'ID de la carte et la condition
-        list($cardId, $condition) = explode('|', $key);
-        $cardId = (int)$cardId; // Conversion explicite en entier
-
-        // Vérifier que l'ID est valide
-        if ($cardId <= 0) {
-            continue; // Ignorer les IDs invalides
-        }
-
-        // Récupérer les informations de la carte
+    foreach ($_SESSION['cart'] as $cartItem) {
         $stmt = $conn->prepare("
-            SELECT c.*, s.name as series_name 
+            SELECT c.*, s.name as series_name, cc.price, cc.quantity as available_quantity 
             FROM cards c 
-            LEFT JOIN series s ON c.series_id = s.id 
-            WHERE c.id = ?
+            JOIN series s ON c.series_id = s.id
+            JOIN card_conditions cc ON c.id = cc.card_id
+            WHERE c.id = ? AND cc.condition_code = ?
         ");
-        $stmt->execute([$cardId]);
+        $stmt->execute([$cartItem['card_id'], $cartItem['condition_code']]);
         $card = $stmt->fetch();
 
-        if (!$card) {
-            // La carte n'existe pas, on pourrait la supprimer du panier
-            unset($_SESSION['cart'][$key]);
-            continue;
+        if ($card) {
+            // Vérifier si la quantité en stock a changé
+            $availableQuantity = (int)$card['available_quantity'];
+            $cartQuantity = min($cartItem['quantity'], $availableQuantity);
+
+            // Si la quantité a changé, mettre à jour le panier
+            if ($cartQuantity != $cartItem['quantity']) {
+                foreach ($_SESSION['cart'] as &$item) {
+                    if ($item['id'] == $cartItem['id']) {
+                        $item['quantity'] = $cartQuantity;
+                        break;
+                    }
+                }
+            }
+
+            // Ajouter les informations nécessaires
+            $items[] = [
+                'cart_id' => $cartItem['id'],
+                'id' => $card['id'],
+                'name' => $card['name'],
+                'card_number' => $card['card_number'],
+                'series_name' => $card['series_name'],
+                'image_url' => $card['image_url'],
+                'condition_code' => $cartItem['condition_code'],
+                'price' => $card['price'],
+                'cart_quantity' => $cartQuantity,
+                'available_quantity' => $availableQuantity,
+                'subtotal' => $card['price'] * $cartQuantity
+            ];
         }
-
-        // Récupérer les informations de condition
-        $stmt = $conn->prepare("
-            SELECT * FROM card_conditions 
-            WHERE card_id = ? AND condition_code = ?
-        ");
-        $stmt->execute([$cardId, $condition]);
-        $conditionData = $stmt->fetch();
-
-        if (!$conditionData) {
-            // La condition n'existe pas pour cette carte
-            unset($_SESSION['cart'][$key]);
-            continue;
-        }
-
-        // Combiner les informations de la carte et de sa condition
-        $item = array_merge($card, $conditionData);
-        $item['cart_quantity'] = $quantity;
-        $item['subtotal'] = $item['price'] * $quantity;
-        $item['condition_code'] = $condition; // Assurez-vous que cette propriété existe
-        $cartItems[] = $item;
     }
 
-    return $cartItems;
+    return $items;
 }
 
 function getCartTotal()
 {
-    $cartItems = getCartItems();
+    $items = getCartItems();
     $total = 0;
 
-    foreach ($cartItems as $item) {
+    foreach ($items as $item) {
         $total += $item['subtotal'];
     }
 
@@ -619,11 +626,108 @@ function getCartItemCount()
     initCart();
 
     $count = 0;
-    foreach ($_SESSION['cart'] as $quantity) {
-        $count += $quantity;
+    foreach ($_SESSION['cart'] as $item) {
+        $count += $item['quantity'];
     }
 
     return $count;
+}
+
+function updateCartItemQuantity($cartItemId, $quantity)
+{
+    initCart();
+
+    if ($quantity <= 0) {
+        removeCartItem($cartItemId);
+        return true;
+    }
+
+    foreach ($_SESSION['cart'] as &$item) {
+        if ($item['id'] == $cartItemId) {
+            // Vérifier le stock disponible
+            $conn = getDbConnection();
+            $stmt = $conn->prepare("
+                SELECT cc.quantity as available_quantity 
+                FROM card_conditions cc
+                WHERE cc.card_id = ? AND cc.condition_code = ?
+            ");
+            $stmt->execute([$item['card_id'], $item['condition_code']]);
+            $result = $stmt->fetch();
+
+            if ($result) {
+                $availableQuantity = (int)$result['available_quantity'];
+                $item['quantity'] = min($quantity, $availableQuantity);
+            } else {
+                $item['quantity'] = $quantity;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function removeCartItem($cartItemId)
+{
+    initCart();
+
+    foreach ($_SESSION['cart'] as $index => $item) {
+        if ($item['id'] == $cartItemId) {
+            unset($_SESSION['cart'][$index]);
+            $_SESSION['cart'] = array_values($_SESSION['cart']); // Réindexer le tableau
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function clearCart()
+{
+    $_SESSION['cart'] = [];
+}
+
+// Vérifier la disponibilité des articles du panier
+function checkCartItemsAvailability()
+{
+    $cartItems = getCartItems();
+    $unavailableItems = [];
+
+    foreach ($cartItems as $item) {
+        if ($item['cart_quantity'] > $item['available_quantity']) {
+            $unavailableItems[] = [
+                'id' => $item['id'],
+                'name' => $item['name'],
+                'condition_code' => $item['condition_code'],
+                'requested' => $item['cart_quantity'],
+                'available' => $item['available_quantity']
+            ];
+        }
+    }
+
+    return $unavailableItems;
+}
+
+// Mettre à jour le stock après une commande
+function updateStockAfterOrder($orderItems)
+{
+    $conn = getDbConnection();
+    $success = true;
+
+    foreach ($orderItems as $item) {
+        $stmt = $conn->prepare("
+            UPDATE card_conditions
+            SET quantity = quantity - ?
+            WHERE card_id = ? AND condition_code = ?
+        ");
+        $result = $stmt->execute([$item['quantity'], $item['card_id'], $item['condition_code']]);
+
+        if (!$result) {
+            $success = false;
+        }
+    }
+
+    return $success;
 }
 
 // Fonctions d'aide

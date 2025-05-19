@@ -1,5 +1,6 @@
 <?php
 // card-details.php
+session_start();
 
 // Inclure les fonctions nécessaires
 require_once 'includes/functions.php';
@@ -275,137 +276,6 @@ require_once 'includes/header.php';
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Gestion des boutons d'ajout au panier avec état spécifique
-        const addToCartButtons = document.querySelectorAll('.add-to-cart');
-
-        addToCartButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const cardId = this.dataset.cardId;
-                const condition = this.dataset.condition;
-                const quantity = 1; // Ou une valeur depuis un input
-
-                // Animation
-                this.classList.add('add-to-cart-pulse');
-                setTimeout(() => {
-                    this.classList.remove('add-to-cart-pulse');
-                }, 500);
-
-                // Requête AJAX pour ajouter au panier
-                fetch('cart-ajax.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `action=add&card_id=${cardId}&condition=${condition}&quantity=${quantity}`,
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Mettre à jour l'icône du panier
-                            const cartCountElement = document.querySelector(".fa-shopping-cart")?.nextElementSibling;
-                            if (cartCountElement) {
-                                cartCountElement.textContent = data.cart_count;
-                            } else {
-                                const cartIcon = document.querySelector(".fa-shopping-cart");
-                                if (cartIcon?.parentNode) {
-                                    const countSpan = document.createElement("span");
-                                    countSpan.className = "absolute -top-2 -right-2 bg-yellow-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs";
-                                    countSpan.textContent = data.cart_count;
-                                    cartIcon.parentNode.appendChild(countSpan);
-                                }
-                            }
-
-                            showNotification("Carte ajoutée au panier !", "success");
-                        } else {
-                            showNotification("Erreur: " + data.message, "error");
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error:", error);
-                        showNotification("Une erreur est survenue", "error");
-                    });
-            });
-        });
-
-        // Mise à jour d'un élément du panier
-        function updateCartItem(cardId, condition, quantity) {
-            fetch("cart-ajax.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: `action=update&card_id=${cardId}&condition=${condition}&quantity=${quantity}`,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Mettre à jour le sous-total
-                        const cartItem = document.querySelector(`.cart-item[data-card-id="${cardId}"][data-condition="${condition}"]`);
-                        if (cartItem) {
-                            const subtotalElement = cartItem.querySelector('.subtotal');
-                            if (subtotalElement) {
-                                subtotalElement.textContent = data.item_subtotal;
-                            }
-                        }
-
-                        // Mettre à jour le total du panier
-                        const cartTotalElement = document.querySelector('.cart-total');
-                        if (cartTotalElement) {
-                            cartTotalElement.textContent = data.cart_total;
-                        }
-
-                        // Mettre à jour le compteur du panier
-                        updateCartCount(data.cart_count);
-                    } else {
-                        showNotification("Erreur: " + data.message, "error");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    showNotification("Une erreur est survenue", "error");
-                });
-        }
-
-        // Suppression d'un élément du panier
-        function removeFromCart(cardId, condition, cartItemElement) {
-            fetch("cart-ajax.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: `action=remove&card_id=${cardId}&condition=${condition}`,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Supprimer l'élément du DOM
-                        cartItemElement.remove();
-
-                        // Mettre à jour le total du panier
-                        const cartTotalElement = document.querySelector('.cart-total');
-                        if (cartTotalElement) {
-                            cartTotalElement.textContent = data.cart_total;
-                        }
-
-                        // Mettre à jour le compteur du panier
-                        updateCartCount(data.cart_count);
-
-                        // Si le panier est vide, recharger la page
-                        if (data.cart_count === 0) {
-                            location.reload();
-                        }
-
-                        showNotification("Article supprimé du panier", "success");
-                    } else {
-                        showNotification("Erreur: " + data.message, "error");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    showNotification("Une erreur est survenue", "error");
-                });
-        }
-
         // Gestion des boutons de quantité (+ / -)
         document.querySelectorAll('.quantity-modifier').forEach(button => {
             button.addEventListener('click', function() {
@@ -422,6 +292,69 @@ require_once 'includes/header.php';
                 input.value = Math.min(maxValue, Math.max(1, currentValue + increment));
             });
         });
+
+        // Gestion des boutons "Ajouter au panier"
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const cardId = this.dataset.cardId;
+                const condition = this.dataset.condition;
+
+                // Récupérer la quantité si disponible
+                let quantity = 1;
+                const quantityInput = document.querySelector(`.quantity-input[data-condition="${condition}"]`);
+                if (quantityInput) {
+                    quantity = parseInt(quantityInput.value, 10) || 1;
+                }
+
+                // Appel AJAX pour ajouter au panier
+                addToCart(cardId, condition, quantity);
+            });
+        });
+
+        // Fonction pour ajouter au panier via AJAX
+        function addToCart(cardId, condition, quantity) {
+            const formData = new FormData();
+            formData.append('card_id', cardId);
+            formData.append('condition', condition);
+            formData.append('quantity', quantity);
+
+            fetch('add-to-cart.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mettre à jour le compteur du panier
+                        updateCartCounter(data.cart_count);
+
+                        // Afficher une notification de succès
+                        showNotification(data.message, 'success');
+                    } else {
+                        // Afficher une notification d'erreur
+                        showNotification(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    showNotification('Une erreur est survenue', 'error');
+                });
+        }
+
+        // Fonction pour mettre à jour le compteur du panier
+        function updateCartCounter(count) {
+            const cartCounters = document.querySelectorAll('.cart-counter');
+            cartCounters.forEach(counter => {
+                if (count > 0) {
+                    counter.textContent = count;
+                    counter.classList.remove('hidden');
+                } else {
+                    counter.classList.add('hidden');
+                }
+            });
+        }
 
         // Fonction pour afficher des notifications
         window.showNotification = function(message, type) {
