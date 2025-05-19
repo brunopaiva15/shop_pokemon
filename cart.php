@@ -184,6 +184,21 @@ if (isset($_POST['update_cart'])) {
                 const increment = this.dataset.modifier === 'plus' ? 1 : -1;
                 const maxValue = parseInt(input.getAttribute('max') || '999', 10);
 
+                // Si on diminue en dessous de 1, supprimer l'article
+                if (currentValue + increment < 1) {
+                    // Trouver le bouton de suppression associé et le cliquer
+                    const cartItem = this.closest('.cart-item');
+                    if (cartItem) {
+                        const removeButton = cartItem.querySelector('.remove-from-cart');
+                        if (removeButton) {
+                            if (confirm('Voulez-vous supprimer cet article du panier?')) {
+                                window.location.href = removeButton.getAttribute('href');
+                            }
+                            return;
+                        }
+                    }
+                }
+
                 input.value = Math.min(maxValue, Math.max(1, currentValue + increment));
 
                 // Trigger change event for cart-ajax.js to catch
