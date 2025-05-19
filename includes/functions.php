@@ -510,21 +510,24 @@ function addToCart($cardId, $condition, $quantity = 1)
     }
 }
 
-function updateCartItem($cardId, $quantity)
+function updateCartItem($cardId, $condition, $quantity)
 {
     initCart();
 
+    $key = $cardId . '|' . $condition;
+
     if ($quantity <= 0) {
-        unset($_SESSION['cart'][$cardId]);
+        unset($_SESSION['cart'][$key]);
     } else {
-        $_SESSION['cart'][$cardId] = $quantity;
+        $_SESSION['cart'][$key] = $quantity;
     }
 }
 
-function removeFromCart($cardId)
+function removeFromCart($cardId, $condition)
 {
     initCart();
-    unset($_SESSION['cart'][$cardId]);
+    $key = $cardId . '|' . $condition;
+    unset($_SESSION['cart'][$key]);
 }
 
 function clearCart()

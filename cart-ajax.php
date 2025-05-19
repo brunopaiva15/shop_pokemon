@@ -17,14 +17,15 @@ $action = isset($_POST['action']) ? $_POST['action'] : '';
 switch ($action) {
     case 'add':
         // Ajouter un article au panier
-        if (!isset($_POST['card_id']) || !isset($_POST['quantity']) || !isset($_POST['condition'])) {
+        if (!isset($_POST['card_id']) || !isset($_POST['quantity'])) {
             echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
             exit;
         }
 
         $cardId = (int)$_POST['card_id'];
         $quantity = (int)$_POST['quantity'];
-        $condition = sanitizeInput($_POST['condition']);
+        // Si condition n'est pas fourni, utilisons une valeur par défaut
+        $condition = isset($_POST['condition']) ? sanitizeInput($_POST['condition']) : '';
 
         if ($quantity <= 0) {
             echo json_encode(['success' => false, 'message' => 'La quantité doit être supérieure à 0']);
@@ -33,14 +34,34 @@ switch ($action) {
 
         // Vérifier que la carte existe et a un stock suffisant
         $conn = getDbConnection();
-        $stmt = $conn->prepare("
-            SELECT c.*, cc.price, cc.quantity 
-            FROM cards c
-            JOIN card_conditions cc ON c.id = cc.card_id
-            WHERE c.id = ? AND cc.condition_code = ?
-        ");
-        $stmt->execute([$cardId, $condition]);
-        $card = $stmt->fetch();
+
+        // Si condition n'est pas spécifié, on prend l'état le moins cher disponible
+        if (empty($condition)) {
+            $stmt = $conn->prepare("
+                SELECT c.*, cc.price, cc.quantity, cc.condition_code
+                FROM cards c
+                JOIN card_conditions cc ON c.id = cc.card_id
+                WHERE c.id = ? AND cc.quantity > 0
+                ORDER BY cc.price ASC
+                LIMIT 1
+            ");
+            $stmt->execute([$cardId]);
+            $card = $stmt->fetch();
+
+            if ($card) {
+                $condition = $card['condition_code'];
+            }
+        } else {
+            // Si condition est spécifié, on l'utilise
+            $stmt = $conn->prepare("
+                SELECT c.*, cc.price, cc.quantity 
+                FROM cards c
+                JOIN card_conditions cc ON c.id = cc.card_id
+                WHERE c.id = ? AND cc.condition_code = ?
+            ");
+            $stmt->execute([$cardId, $condition]);
+            $card = $stmt->fetch();
+        }
 
         if (!$card) {
             echo json_encode(['success' => false, 'message' => 'Carte ou état non trouvé']);
@@ -89,18 +110,37 @@ switch ($action) {
 
     case 'update':
         // Mettre à jour la quantité d'un article
-        if (!isset($_POST['card_id']) || !isset($_POST['quantity']) || !isset($_POST['condition'])) {
+        if (!isset($_POST['card_id']) || !isset($_POST['quantity'])) {
             echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
             exit;
         }
 
         $cardId = (int)$_POST['card_id'];
         $quantity = (int)$_POST['quantity'];
-        $condition = sanitizeInput($_POST['condition']);
+        // Si condition n'est pas fourni, utilisons une valeur par défaut ou cherchons dans le panier
+        $condition = isset($_POST['condition']) ? sanitizeInput($_POST['condition']) : '';
 
         if ($quantity <= 0) {
             echo json_encode(['success' => false, 'message' => 'La quantité doit être supérieure à 0']);
             exit;
+        }
+
+        // Si le condition n'est pas spécifié, essayons de le trouver dans le panier
+        if (empty($condition)) {
+            // Parcourir le panier pour trouver la carte
+            foreach ($_SESSION['cart'] as $key => $qty) {
+                list($cId, $cond) = explode('|', $key);
+                if ((int)$cId === $cardId) {
+                    $condition = $cond;
+                    break;
+                }
+            }
+
+            // Si toujours pas de condition, on ne peut pas continuer
+            if (empty($condition)) {
+                echo json_encode(['success' => false, 'message' => 'État de carte non spécifié']);
+                exit;
+            }
         }
 
         // Vérifier que la carte existe et a un stock suffisant
@@ -156,13 +196,31 @@ switch ($action) {
 
     case 'remove':
         // Supprimer un article du panier
-        if (!isset($_POST['card_id']) || !isset($_POST['condition'])) {
+        if (!isset($_POST['card_id'])) {
             echo json_encode(['success' => false, 'message' => 'Paramètres manquants']);
             exit;
         }
 
         $cardId = (int)$_POST['card_id'];
-        $condition = sanitizeInput($_POST['condition']);
+        $condition = isset($_POST['condition']) ? sanitizeInput($_POST['condition']) : '';
+
+        // Si le condition n'est pas spécifié, essayons de le trouver dans le panier
+        if (empty($condition)) {
+            // Parcourir le panier pour trouver la carte
+            foreach ($_SESSION['cart'] as $key => $qty) {
+                list($cId, $cond) = explode('|', $key);
+                if ((int)$cId === $cardId) {
+                    $condition = $cond;
+                    break;
+                }
+            }
+
+            // Si toujours pas de condition, on ne peut pas continuer
+            if (empty($condition)) {
+                echo json_encode(['success' => false, 'message' => 'État de carte non spécifié']);
+                exit;
+            }
+        }
 
         // Supprimer du panier
         removeFromCart($cardId, $condition);
