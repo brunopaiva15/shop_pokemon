@@ -279,21 +279,10 @@ require_once 'includes/header.php';
         const addToCartButtons = document.querySelectorAll('.add-to-cart');
 
         addToCartButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-
+            button.addEventListener('click', function() {
                 const cardId = this.dataset.cardId;
                 const condition = this.dataset.condition;
-                let quantity = 1;
-
-                // Chercher l'input de quantité associé à ce bouton si disponible
-                const parent = this.closest('.mt-3');
-                if (parent) {
-                    const quantityInput = parent.querySelector('.quantity-input');
-                    if (quantityInput) {
-                        quantity = parseInt(quantityInput.value, 10) || 1;
-                    }
-                }
+                const quantity = 1; // Ou une valeur depuis un input
 
                 // Animation
                 this.classList.add('add-to-cart-pulse');
@@ -301,15 +290,11 @@ require_once 'includes/header.php';
                     this.classList.remove('add-to-cart-pulse');
                 }, 500);
 
-                // Construction de l'URL AJAX
-                const baseUrl = window.location.pathname.includes("/") ?
-                    window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/")) :
-                    "";
-
-                fetch(baseUrl + "/cart-ajax.php", {
-                        method: "POST",
+                // Requête AJAX pour ajouter au panier
+                fetch('cart-ajax.php', {
+                        method: 'POST',
                         headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
+                            'Content-Type': 'application/x-www-form-urlencoded',
                         },
                         body: `action=add&card_id=${cardId}&condition=${condition}&quantity=${quantity}`,
                     })
@@ -341,6 +326,85 @@ require_once 'includes/header.php';
                     });
             });
         });
+
+        // Mise à jour d'un élément du panier
+        function updateCartItem(cardId, condition, quantity) {
+            fetch("cart-ajax.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: `action=update&card_id=${cardId}&condition=${condition}&quantity=${quantity}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mettre à jour le sous-total
+                        const cartItem = document.querySelector(`.cart-item[data-card-id="${cardId}"][data-condition="${condition}"]`);
+                        if (cartItem) {
+                            const subtotalElement = cartItem.querySelector('.subtotal');
+                            if (subtotalElement) {
+                                subtotalElement.textContent = data.item_subtotal;
+                            }
+                        }
+
+                        // Mettre à jour le total du panier
+                        const cartTotalElement = document.querySelector('.cart-total');
+                        if (cartTotalElement) {
+                            cartTotalElement.textContent = data.cart_total;
+                        }
+
+                        // Mettre à jour le compteur du panier
+                        updateCartCount(data.cart_count);
+                    } else {
+                        showNotification("Erreur: " + data.message, "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    showNotification("Une erreur est survenue", "error");
+                });
+        }
+
+        // Suppression d'un élément du panier
+        function removeFromCart(cardId, condition, cartItemElement) {
+            fetch("cart-ajax.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                    },
+                    body: `action=remove&card_id=${cardId}&condition=${condition}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Supprimer l'élément du DOM
+                        cartItemElement.remove();
+
+                        // Mettre à jour le total du panier
+                        const cartTotalElement = document.querySelector('.cart-total');
+                        if (cartTotalElement) {
+                            cartTotalElement.textContent = data.cart_total;
+                        }
+
+                        // Mettre à jour le compteur du panier
+                        updateCartCount(data.cart_count);
+
+                        // Si le panier est vide, recharger la page
+                        if (data.cart_count === 0) {
+                            location.reload();
+                        }
+
+                        showNotification("Article supprimé du panier", "success");
+                    } else {
+                        showNotification("Erreur: " + data.message, "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    showNotification("Une erreur est survenue", "error");
+                });
+        }
 
         // Gestion des boutons de quantité (+ / -)
         document.querySelectorAll('.quantity-modifier').forEach(button => {
