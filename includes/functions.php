@@ -547,6 +547,7 @@ function getCartItems()
     $cartItems = [];
 
     foreach ($_SESSION['cart'] as $key => $quantity) {
+        // Extraire l'ID de la carte et la condition de la clé composite
         list($cardId, $condition) = explode('|', $key);
 
         // Récupérer les informations de base de la carte
