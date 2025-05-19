@@ -41,7 +41,9 @@ $cartTotal = getCartTotal();
                 </thead>
                 <tbody class="text-gray-600 text-sm">
                     <?php foreach ($cartItems as $item): ?>
-                        <tr class="cart-item border-b border-gray-200 hover:bg-gray-50" data-card-id="<?php echo $item['id']; ?>" data-condition="<?php echo $item['condition_code']; ?>">
+                        <tr class="cart-item border-b border-gray-200 hover:bg-gray-50"
+                            data-card-id="<?php echo $item['id']; ?>"
+                            data-condition="<?php echo $item['condition_code']; ?>">
                             <td class="py-4 px-6 text-left">
                                 <div class="flex items-center">
                                     <div class="mr-4">
