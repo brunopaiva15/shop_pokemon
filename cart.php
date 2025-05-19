@@ -184,28 +184,32 @@ if (isset($_POST['update_cart'])) {
                 const increment = this.dataset.modifier === 'plus' ? 1 : -1;
                 const maxValue = parseInt(input.getAttribute('max') || '999', 10);
 
-                // Si on diminue en dessous de 1, supprimer l'article
-                if (currentValue + increment < 1) {
-                    // Trouver le bouton de suppression associé et le cliquer
+                // Si on clique sur le bouton moins et que la quantité est déjà à 1
+                if (increment === -1 && currentValue === 1) {
+                    // Trouver l'élément parent cart-item
                     const cartItem = this.closest('.cart-item');
                     if (cartItem) {
-                        const removeButton = cartItem.querySelector('.remove-from-cart');
-                        if (removeButton) {
+                        // Obtenir les IDs nécessaires pour construire l'URL de suppression
+                        const cardId = cartItem.dataset.cardId;
+                        const condition = cartItem.dataset.condition;
+                        if (cardId && condition) {
                             if (confirm('Voulez-vous supprimer cet article du panier?')) {
-                                window.location.href = removeButton.getAttribute('href');
+                                // Rediriger vers l'URL de suppression
+                                window.location.href = `cart.php?remove=${cardId}&condition=${condition}`;
+                                return;
                             }
-                            return;
                         }
                     }
+                } else {
+                    // Comportement normal pour les autres cas
+                    input.value = Math.min(maxValue, Math.max(1, currentValue + increment));
+
+                    // Déclencher l'événement change pour cart-ajax.js
+                    const changeEvent = new Event('change', {
+                        bubbles: true
+                    });
+                    input.dispatchEvent(changeEvent);
                 }
-
-                input.value = Math.min(maxValue, Math.max(1, currentValue + increment));
-
-                // Trigger change event for cart-ajax.js to catch
-                const changeEvent = new Event('change', {
-                    bubbles: true
-                });
-                input.dispatchEvent(changeEvent);
             });
         });
 
