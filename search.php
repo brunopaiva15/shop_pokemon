@@ -1,24 +1,26 @@
 <?php
 // search.php
 
-// Inclure les fichiers nécessaires
+// Inclure le fichier de fonctions explicitement
 require_once 'includes/functions.php';
 
-// Vérifier si un terme de recherche est fourni
-if (!isset($_GET['q']) || empty($_GET['q'])) {
-    header('Location: index.php');
-    exit;
-}
+session_start();
 
 if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     header('Location: auth.php');
     exit;
 }
 
-$searchTerm = sanitizeInput($_GET['q']);
+// Récupérer le terme de recherche
+$searchTerm = isset($_GET['q']) ? sanitizeInput($_GET['q']) : '';
+
+if (empty($searchTerm)) {
+    header('Location: index.php');
+    exit;
+}
 
 // Définir le titre de la page
-$pageTitle = 'Recherche : ' . htmlspecialchars($searchTerm);
+$pageTitle = 'Recherche: ' . htmlspecialchars($searchTerm);
 
 // Inclure les filtres
 $includeFiltersScript = true;
@@ -47,7 +49,6 @@ $sortOptions = [
     'name_desc'   => ['name',         'DESC']
 ];
 
-// Définir 'number_asc' comme tri par défaut
 $sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions)
     ? $_GET['sort']
     : 'number_asc';
@@ -60,8 +61,8 @@ require_once 'includes/header.php';
 // Récupérer toutes les séries pour les filtres
 $allSeries = getSeriesWithCards();
 
-// MODIFICATION : Nouvelle fonction pour obtenir toutes les cartes recherchées filtrées en une seule requête
-function getSearchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder)
+// Fonction pour rechercher les cartes selon les critères
+function searchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder)
 {
     $conn = getDbConnection();
 
@@ -71,11 +72,10 @@ function getSearchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $va
         FROM cards c 
         LEFT JOIN series s ON c.series_id = s.id 
         JOIN card_conditions cc ON c.id = cc.card_id
-        WHERE cc.quantity > 0 
-        AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ?)";
+        WHERE cc.quantity > 0
+        AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ? OR s.name LIKE ?)";
 
-    $searchParam = '%' . $searchTerm . '%';
-    $params = [$searchParam, $searchParam, $searchParam];
+    $params = ["%$searchTerm%", "%$searchTerm%", "%$searchTerm%", "%$searchTerm%"];
 
     // Ajouter les conditions de filtrage
     if ($seriesId) {
@@ -132,17 +132,17 @@ function getSearchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $va
 }
 
 // Récupérer toutes les cartes filtrées en une seule requête
-$allSearchResults = getSearchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder);
+$allFilteredCards = searchFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder);
 
 // Compter le nombre total après tous les filtres
-$totalResults = count($allSearchResults);
+$totalCards = count($allFilteredCards);
 
 // Paginer les résultats
-$paginatedResults = array_slice($allSearchResults, $offset, $perPage);
+$cards = array_slice($allFilteredCards, $offset, $perPage);
 
 // Pour chaque carte, récupérer tous ses états disponibles
 $conn = getDbConnection();
-foreach ($paginatedResults as &$card) {
+foreach ($cards as &$card) {
     // Récupérer tous les états disponibles pour cette carte
     $stmt = $conn->prepare("
         SELECT * FROM card_conditions 
@@ -155,7 +155,7 @@ foreach ($paginatedResults as &$card) {
 // Libérer la référence pour éviter les doublons
 unset($card);
 
-$totalPages = ceil($totalResults / $perPage);
+$totalPages = ceil($totalCards / $perPage);
 
 // Générer les paramètres d'URL pour la pagination
 $paginationParams = $_GET;
@@ -163,46 +163,16 @@ unset($paginationParams['page']); // Supprimer le paramètre de page existant
 $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 ?>
 
-<!-- Bandeau pour dire que toutes les cartes sont livrées avec un sleeve -->
-<div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-6">
-    <div class="flex flex-wrap justify-between items-center">
-        <div>
-            <i class="fas fa-info-circle mr-2"></i>
-            Toutes les cartes sont livrées dans une sleeve de protection ! Pour les cartes de plus de 2.00 CHF, un toploader est également inclus.
-        </div>
-        <button id="show-condition-guide" class="mt-2 sm:mt-0 text-blue-600 hover:text-blue-800 underline">
-            <i class="fas fa-question-circle mr-1"></i> Guide des états de cartes (<small>MT, NM...</small>)
-        </button>
-    </div>
-</div>
-
-<!-- Modal pour afficher le guide des états des cartes -->
-<div id="condition-guide-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-    <div class="bg-white rounded-lg p-4 max-w-3xl mx-4 relative">
-        <button id="close-condition-guide" class="absolute top-2 right-2 text-gray-600 hover:text-gray-900">
-            <i class="fas fa-times text-xl"></i>
-        </button>
-        <h3 class="text-xl font-bold mb-4">Guide des états des cartes</h3>
-        <img src="assets/images/Card_Condition_Table_FR.png" alt="Guide des états des cartes" class="w-full">
-    </div>
+<!-- Résultats de recherche -->
+<div class="bg-white p-4 rounded-lg shadow-md mb-6">
+    <p class="text-gray-600">
+        <span class="font-semibold"><?php echo $totalCards; ?></span> résultat<?php echo $totalCards > 1 ? 's' : ''; ?> pour la recherche "<span class="font-semibold"><?php echo htmlspecialchars($searchTerm); ?></span>"
+    </p>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
     <!-- Sidebar avec filtres -->
     <div id="filter-sidebar" class="md:col-span-1 hidden md:block">
-        <div class="filter-container mb-6">
-            <h3 class="filter-title">Recherche</h3>
-            <div class="filter-content">
-                <form action="search.php" method="GET" class="flex">
-                    <input type="text" name="q" value="<?php echo htmlspecialchars($searchTerm); ?>"
-                        class="flex-grow p-2 border border-gray-300 rounded-l-md">
-                    <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-r-md hover:bg-gray-900 transition">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-
         <div class="filter-container mb-6">
             <h3 class="filter-title">Filtrer par série</h3>
             <div class="filter-content">
@@ -318,8 +288,8 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <!-- Titre et barre d'outils mobile -->
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">
-                Résultats pour "<?php echo htmlspecialchars($searchTerm); ?>"
-                <span class="text-sm font-normal text-gray-500">(<?php echo $totalResults; ?> cartes)</span>
+                Résultats de recherche
+                <span class="text-sm font-normal text-gray-500">(<?php echo $totalCards; ?> cartes)</span>
             </h2>
 
             <button id="mobile-filter-toggle" class="md:hidden bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
@@ -327,12 +297,12 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             </button>
         </div>
 
-        <?php if (empty($paginatedResults)): ?>
-            <!-- Aucun résultat trouvé -->
+        <?php if (empty($cards)): ?>
+            <!-- Aucune carte trouvée -->
             <div class="bg-white p-8 rounded-lg shadow-md text-center">
                 <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
-                <h3 class="text-2xl font-bold mb-2">Aucun résultat trouvé</h3>
-                <p class="text-gray-600 mb-4">Aucune carte ne correspond à votre recherche "<?php echo htmlspecialchars($searchTerm); ?>".</p>
+                <h3 class="text-2xl font-bold mb-2">Aucune carte trouvée</h3>
+                <p class="text-gray-600 mb-4">Aucune carte ne correspond à vos critères de recherche.</p>
                 <a href="index.php" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition">
                     Voir toutes les cartes
                 </a>
@@ -340,7 +310,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <?php else: ?>
             <!-- Grille de cartes -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <?php foreach ($paginatedResults as $card): ?>
+                <?php foreach ($cards as $card): ?>
                     <div class="card-item bg-white rounded-lg shadow-md overflow-hidden card-hover">
                         <div class="card-image-zoom p-4 bg-gray-100 relative">
                             <?php
@@ -368,13 +338,13 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                                     </a>
                                 </h3>
 
-                                <?php if (count($card['available_conditions']) > 1): ?>
+                                <?php if (isset($card['available_conditions']) && count($card['available_conditions']) > 1): ?>
                                     <span class="condition-badge condition-multiple">
                                         Multiple
                                     </span>
-                                <?php elseif (isset($card['card_condition']) && !empty($card['card_condition'])): ?>
-                                    <span class="condition-badge condition-<?php echo $card['card_condition']; ?>">
-                                        <?php echo CARD_CONDITIONS[$card['card_condition']]; ?>
+                                <?php elseif (isset($card['available_conditions']) && count($card['available_conditions']) == 1): ?>
+                                    <span class="condition-badge condition-<?php echo $card['available_conditions'][0]['condition_code']; ?>">
+                                        <?php echo CARD_CONDITIONS[$card['available_conditions'][0]['condition_code']]; ?>
                                     </span>
                                 <?php endif; ?>
                             </div>
@@ -403,7 +373,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 
                             <div class="flex justify-between items-center">
                                 <div class="font-bold text-xl text-red-600">
-                                    <?php if (count($card['available_conditions']) > 1): ?>
+                                    <?php if (isset($card['available_conditions']) && count($card['available_conditions']) > 1): ?>
                                         À partir de <?php echo formatPrice($card['price']); ?>
                                     <?php else: ?>
                                         <?php echo formatPrice($card['price']); ?>
@@ -478,64 +448,38 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 </style>
 
 <script>
-    // Script pour la gestion des filtres
     document.addEventListener('DOMContentLoaded', function() {
-        // Référence aux éléments de filtre
-        const seriesFilter = document.getElementById('series-filter');
-        const conditionFilter = document.getElementById('condition-filter');
-        const rarityFilter = document.getElementById('rarity-filter');
-        const variantFilter = document.getElementById('variant-filter');
-        const priceMinFilter = document.getElementById('price-min');
-        const priceMaxFilter = document.getElementById('price-max');
-        const sortFilter = document.getElementById('sort-filter');
+        // Récupérer le terme de recherche de l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('q');
 
-        // Boutons pour appliquer et réinitialiser les filtres
-        const applyButton = document.getElementById('apply-filters');
-        const resetButton = document.getElementById('reset-filters');
-
-        // Fonction pour appliquer les filtres
+        // Mise à jour de la fonction applyFilters pour inclure le terme de recherche
         window.applyFilters = function() {
             const params = new URLSearchParams(window.location.search);
 
             // Conserver le terme de recherche
-            const searchQuery = params.get('q');
-            if (searchQuery) {
-                params.set('q', searchQuery);
+            if (searchTerm) {
+                params.set('q', searchTerm);
             }
 
-            // Mettre à jour les paramètres d'URL avec les valeurs des filtres
-            updateUrlParam(params, 'series', seriesFilter.value);
-            updateUrlParam(params, 'condition', conditionFilter.value);
-            updateUrlParam(params, 'rarity', rarityFilter.value);
-            updateUrlParam(params, 'variant', variantFilter.value);
-            updateUrlParam(params, 'sort', sortFilter.value);
-            updateUrlParam(params, 'price_min', priceMinFilter.value);
-            updateUrlParam(params, 'price_max', priceMaxFilter.value);
+            updateUrlParam(params, 'series', document.getElementById('series-filter').value);
+            updateUrlParam(params, 'condition', document.getElementById('condition-filter').value);
+            updateUrlParam(params, 'rarity', document.getElementById('rarity-filter').value);
+            updateUrlParam(params, 'variant', document.getElementById('variant-filter').value);
+            updateUrlParam(params, 'sort', document.getElementById('sort-filter').value);
+            updateUrlParam(params, 'price_min', document.getElementById('price-min').value);
+            updateUrlParam(params, 'price_max', document.getElementById('price-max').value);
 
             // Rediriger vers la nouvelle URL
             window.location.href = window.location.pathname + '?' + params.toString();
         };
 
-        // Fonction pour réinitialiser les filtres
+        // Mise à jour de la fonction resetFilters pour revenir à la recherche simple
         window.resetFilters = function() {
-            // Réinitialiser tous les champs de filtre
-            seriesFilter.value = '';
-            conditionFilter.value = '';
-            rarityFilter.value = '';
-            variantFilter.value = '';
-            sortFilter.value = 'number_asc';
-            priceMinFilter.value = '';
-            priceMaxFilter.value = '';
-
-            // Conserver uniquement le paramètre de recherche
-            const params = new URLSearchParams();
-            const searchQuery = (new URLSearchParams(window.location.search)).get('q');
-
-            if (searchQuery) {
-                params.set('q', searchQuery);
-                window.location.href = window.location.pathname + '?' + params.toString();
+            if (searchTerm) {
+                window.location.href = window.location.pathname + '?q=' + encodeURIComponent(searchTerm);
             } else {
-                window.location.href = 'index.php';
+                window.location.href = window.location.pathname;
             }
         };
 
@@ -548,49 +492,6 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             }
         }
 
-        // Associer les fonctions aux boutons
-        if (applyButton) {
-            applyButton.addEventListener('click', applyFilters);
-        }
-
-        if (resetButton) {
-            resetButton.addEventListener('click', resetFilters);
-        }
-
-        // Gestion de la fenêtre modale pour le guide des états des cartes
-        const showButton = document.getElementById('show-condition-guide');
-        const closeButton = document.getElementById('close-condition-guide');
-        const modal = document.getElementById('condition-guide-modal');
-
-        if (showButton && modal && closeButton) {
-            showButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                modal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // Empêcher le défilement du fond
-            });
-
-            closeButton.addEventListener('click', function() {
-                modal.classList.add('hidden');
-                document.body.style.overflow = ''; // Réactiver le défilement
-            });
-
-            // Fermer également en cliquant en dehors de l'image
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
-            });
-
-            // Fermer avec la touche Echap
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                    modal.classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
-            });
-        }
-
         // Gestion du bouton mobile pour afficher/masquer les filtres
         const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
         const filterSidebar = document.getElementById('filter-sidebar');
@@ -601,6 +502,22 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 mobileFilterToggle.innerHTML = filterSidebar.classList.contains('hidden') ?
                     '<i class="fas fa-filter mr-1"></i> Filtres' :
                     '<i class="fas fa-times mr-1"></i> Masquer';
+            });
+        }
+
+        // Appliquer les filtres lors du clic sur le bouton
+        const applyFiltersBtn = document.getElementById('apply-filters');
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', function() {
+                applyFilters();
+            });
+        }
+
+        // Réinitialiser les filtres lors du clic sur le bouton
+        const resetFiltersBtn = document.getElementById('reset-filters');
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function() {
+                resetFilters();
             });
         }
 
