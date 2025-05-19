@@ -150,11 +150,11 @@ switch ($action) {
         // Vérifier que la carte existe et a un stock suffisant
         $conn = getDbConnection();
         $stmt = $conn->prepare("
-                SELECT c.*, cc.price, cc.quantity
-                FROM cards c
-                JOIN card_conditions cc ON c.id = cc.card_id
-                WHERE c.id = ? AND cc.condition_code = ?
-            ");
+            SELECT c.*, cc.price, cc.quantity
+            FROM cards c
+            JOIN card_conditions cc ON c.id = cc.card_id
+            WHERE c.id = ? AND cc.condition_code = ?
+        ");
         $stmt->execute([$cardId, $condition]);
         $card = $stmt->fetch();
 
