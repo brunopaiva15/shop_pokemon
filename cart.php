@@ -5,11 +5,12 @@
 $pageTitle = 'Votre panier';
 
 // Inclure l'en-tête
-require_once 'includes/header.php';
+require_once 'includes/functions.php';
 
 // Récupérer les articles du panier
 $cartItems = getCartItems();
 $cartTotal = getCartTotal();
+require_once 'includes/header.php';
 ?>
 
 <div class="cart-container bg-white rounded-lg shadow-lg p-6">
@@ -41,9 +42,13 @@ $cartTotal = getCartTotal();
                 </thead>
                 <tbody class="text-gray-600 text-sm">
                     <?php foreach ($cartItems as $item): ?>
+                        <?php
+                        // Vérifions que l'élément a bien un condition_code
+                        $condition = isset($item['condition_code']) ? $item['condition_code'] : '';
+                        ?>
                         <tr class="cart-item border-b border-gray-200 hover:bg-gray-50"
                             data-card-id="<?php echo $item['id']; ?>"
-                            data-condition="<?php echo $item['condition_code']; ?>">
+                            data-condition="<?php echo $condition; ?>">
                             <td class="py-4 px-6 text-left">
                                 <div class="flex items-center">
                                     <div class="mr-4">
@@ -63,8 +68,8 @@ $cartTotal = getCartTotal();
                                 </div>
                             </td>
                             <td class="py-4 px-6 text-center">
-                                <span class="condition-badge condition-<?php echo $item['condition_code']; ?>">
-                                    <?php echo isset(CARD_CONDITIONS[$item['condition_code']]) ? CARD_CONDITIONS[$item['condition_code']] : 'Non spécifié'; ?>
+                                <span class="condition-badge condition-<?php echo $condition; ?>">
+                                    <?php echo isset(CARD_CONDITIONS[$condition]) ? CARD_CONDITIONS[$condition] : 'Non spécifié'; ?>
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-center">
@@ -136,11 +141,13 @@ $cartTotal = getCartTotal();
                 // Mettre à jour le panier
                 const cartItem = this.closest('.cart-item');
                 if (cartItem) {
-                    updateCartItem(
-                        cartItem.dataset.cardId,
-                        cartItem.dataset.condition,
-                        parseInt(input.value, 10)
-                    );
+                    const cardId = cartItem.dataset.cardId;
+                    const condition = cartItem.dataset.condition || '';
+
+                    // Debug pour vérifier les valeurs
+                    console.log("Mise à jour:", cardId, condition, input.value);
+
+                    updateCartItem(cardId, condition, parseInt(input.value, 10));
                 }
             });
         });
@@ -163,11 +170,13 @@ $cartTotal = getCartTotal();
                 // Mettre à jour le panier
                 const cartItem = this.closest('.cart-item');
                 if (cartItem) {
-                    updateCartItem(
-                        cartItem.dataset.cardId,
-                        cartItem.dataset.condition,
-                        currentValue
-                    );
+                    const cardId = cartItem.dataset.cardId;
+                    const condition = cartItem.dataset.condition || '';
+
+                    // Debug pour vérifier les valeurs
+                    console.log("Mise à jour via input:", cardId, condition, currentValue);
+
+                    updateCartItem(cardId, condition, currentValue);
                 }
             });
         });
@@ -181,7 +190,11 @@ $cartTotal = getCartTotal();
                 if (!cartItem) return;
 
                 const cardId = cartItem.dataset.cardId;
-                const condition = cartItem.dataset.condition;
+                // Assurez-vous que data-condition est bien défini dans votre HTML
+                const condition = cartItem.dataset.condition || '';
+
+                // Debug pour vérifier les valeurs
+                console.log("Suppression:", cardId, condition);
 
                 removeFromCart(cardId, condition, cartItem);
             });
