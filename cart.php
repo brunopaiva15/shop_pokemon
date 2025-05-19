@@ -1,21 +1,56 @@
 <?php
 // cart.php
 
+// Inclure les fonctions nécessaires
+require_once 'includes/functions.php';
+
 // Définir le titre de la page
 $pageTitle = 'Votre panier';
 
 // Inclure l'en-tête
-require_once 'includes/functions.php';
+require_once 'includes/header.php';
 
 // Récupérer les articles du panier
 $cartItems = getCartItems();
 $cartTotal = getCartTotal();
-require_once 'includes/header.php';
 
-var_dump($_SESSION['cart']);
+// Suppression d'un article du panier
+if (isset($_GET['remove']) && isset($_GET['condition'])) {
+    $cardId = (int)$_GET['remove'];
+    $condition = sanitizeInput($_GET['condition']);
+    removeFromCart($cardId, $condition);
+
+    // Redirection pour éviter de conserver les paramètres dans l'URL
+    header('Location: cart.php');
+    exit;
+}
+
+// Mise à jour des quantités
+if (isset($_POST['update_cart'])) {
+    foreach ($_POST['quantity'] as $key => $quantity) {
+        // Vérifier que la clé a un format valide
+        if (strpos($key, '|') === false) {
+            continue;
+        }
+
+        list($cardId, $condition) = explode('|', $key);
+        $cardId = (int)$cardId;
+        $quantity = (int)$quantity;
+
+        if ($quantity > 0) {
+            updateCartItem($cardId, $condition, $quantity);
+        } else {
+            removeFromCart($cardId, $condition);
+        }
+    }
+
+    // Redirection pour éviter la soumission multiple du formulaire
+    header('Location: cart.php');
+    exit;
+}
 ?>
 
-<div class="cart-container bg-white rounded-lg shadow-lg p-6">
+<div class="bg-white rounded-lg shadow-lg p-6">
     <h1 class="text-3xl font-bold mb-6">Votre panier</h1>
 
     <?php if (empty($cartItems)): ?>
@@ -29,96 +64,107 @@ var_dump($_SESSION['cart']);
             </a>
         </div>
     <?php else: ?>
-        <!-- Panier avec articles -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
-                        <th class="py-3 px-6 text-left">Carte</th>
-                        <th class="py-3 px-6 text-center">État</th>
-                        <th class="py-3 px-6 text-center">Prix</th>
-                        <th class="py-3 px-6 text-center">Quantité</th>
-                        <th class="py-3 px-6 text-center">Sous-total</th>
-                        <th class="py-3 px-6 text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-600 text-sm">
-                    <?php foreach ($cartItems as $item): ?>
-                        <?php
-                        // Vérifions que l'élément a bien un condition_code
-                        $condition = isset($item['condition_code']) ? $item['condition_code'] : '';
-                        ?>
-                        <tr class="cart-item border-b border-gray-200 hover:bg-gray-50"
-                            data-card-id="<?php echo $item['id']; ?>"
-                            data-condition="<?php echo $condition; ?>">
-                            <td class="py-4 px-6 text-left">
-                                <div class="flex items-center">
-                                    <div class="mr-4">
+        <!-- Contenu du panier -->
+        <form method="POST" action="cart.php" class="cart-container">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-gray-200">
+                            <th class="py-2 px-4 text-left">Carte</th>
+                            <th class="py-2 px-4 text-left">État</th>
+                            <th class="py-2 px-4 text-right">Prix unitaire</th>
+                            <th class="py-2 px-4 text-center">Quantité</th>
+                            <th class="py-2 px-4 text-right">Sous-total</th>
+                            <th class="py-2 px-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($cartItems as $item): ?>
+                            <tr class="cart-item border-b border-gray-200" data-card-id="<?php echo $item['id']; ?>" data-condition="<?php echo $item['condition_code']; ?>">
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center">
                                         <img src="<?php echo $item['image_url'] ?: 'assets/images/card-placeholder.png'; ?>"
                                             alt="<?php echo htmlspecialchars($item['name']); ?>"
-                                            class="w-16 h-16 object-contain">
-                                    </div>
-                                    <div>
-                                        <a href="card-details.php?id=<?php echo $item['id']; ?>" class="font-medium hover:text-red-600 transition">
-                                            <?php echo htmlspecialchars($item['name']); ?>
-                                        </a>
-                                        <div class="text-xs text-gray-500">
-                                            Série: <?php echo isset($item['series_name']) ? htmlspecialchars($item['series_name']) : 'Non spécifiée'; ?><br>
-                                            N°: <?php echo htmlspecialchars($item['card_number']); ?>
+                                            class="w-16 h-16 object-contain mr-3">
+                                        <div>
+                                            <a href="card-details.php?id=<?php echo $item['id']; ?>" class="font-medium hover:text-red-600 transition">
+                                                <?php echo htmlspecialchars($item['name']); ?>
+                                            </a>
+                                            <div class="text-sm text-gray-500">
+                                                <?php echo htmlspecialchars($item['series_name']); ?> |
+                                                N°: <?php echo htmlspecialchars($item['card_number']); ?>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="condition-badge condition-<?php echo $item['condition_code']; ?>">
+                                        <?php echo CARD_CONDITIONS[$item['condition_code']]; ?>
+                                    </span>
+                                </td>
+                                <td class="py-4 px-4 text-right">
+                                    <?php echo formatPrice($item['price']); ?>
+                                </td>
+                                <td class="py-4 px-4 text-center">
+                                    <div class="quantity-selector mx-auto">
+                                        <button type="button" class="quantity-modifier" data-modifier="minus">-</button>
+                                        <input type="number" name="quantity[<?php echo $item['id'] . '|' . $item['condition_code']; ?>]"
+                                            min="1" max="<?php echo $item['quantity']; ?>" value="<?php echo $item['cart_quantity']; ?>"
+                                            class="quantity-input">
+                                        <button type="button" class="quantity-modifier" data-modifier="plus">+</button>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-right font-bold subtotal">
+                                    <?php echo formatPrice($item['subtotal']); ?>
+                                </td>
+                                <td class="py-4 px-4 text-center">
+                                    <a href="cart.php?remove=<?php echo $item['id']; ?>&condition=<?php echo $item['condition_code']; ?>"
+                                        class="remove-from-cart text-red-600 hover:text-red-800 transition">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="py-4 px-4 text-right font-bold">Total:</td>
+                            <td class="py-4 px-4 text-right font-bold cart-total">
+                                <?php echo formatPrice($cartTotal); ?>
                             </td>
-                            <td class="py-4 px-6 text-center">
-                                <span class="condition-badge condition-<?php echo $condition; ?>">
-                                    <?php echo isset(CARD_CONDITIONS[$condition]) ? CARD_CONDITIONS[$condition] : 'Non spécifié'; ?>
-                                </span>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                <?php echo formatPrice($item['price']); ?>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                <div class="quantity-selector mx-auto">
-                                    <button type="button" class="quantity-modifier" data-modifier="minus">-</button>
-                                    <input type="number" min="1" max="<?php echo $item['quantity']; ?>" value="<?php echo $item['cart_quantity']; ?>" class="quantity-input">
-                                    <button type="button" class="quantity-modifier" data-modifier="plus">+</button>
-                                </div>
-                            </td>
-                            <td class="py-4 px-6 text-center font-bold subtotal">
-                                <?php echo formatPrice($item['subtotal']); ?>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                <button class="remove-from-cart text-red-600 hover:text-red-800 transition">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
+                            <td class="py-4 px-4"></td>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                    </tfoot>
+                </table>
+            </div>
 
-        <!-- Résumé du panier -->
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div></div>
-            <div class="bg-gray-100 p-6 rounded-lg">
-                <h3 class="text-xl font-bold mb-4">Résumé de la commande</h3>
+            <div class="flex flex-col md:flex-row justify-between mt-6">
+                <a href="index.php" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition mb-4 md:mb-0 text-center">
+                    <i class="fas fa-arrow-left mr-1"></i> Continuer mes achats
+                </a>
 
-                <div class="flex justify-between border-b border-gray-300 pb-4 mb-4">
-                    <span>Total (<?php echo count($cartItems); ?> article<?php echo count($cartItems) > 1 ? 's' : ''; ?>)</span>
-                    <span class="font-bold cart-total"><?php echo formatPrice($cartTotal); ?></span>
-                </div>
+                <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                    <button type="submit" name="update_cart" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
+                        <i class="fas fa-sync-alt mr-1"></i> Mettre à jour le panier
+                    </button>
 
-                <div class="flex justify-between items-center mb-4">
-                    <a href="index.php" class="text-gray-600 hover:text-red-600 transition">
-                        <i class="fas fa-arrow-left mr-1"></i> Continuer les achats
-                    </a>
-
-                    <a href="checkout.php" class="bg-gray-800 text-white py-3 px-6 rounded-md hover:bg-gray-900 transition">
-                        Procéder au paiement <i class="fas fa-arrow-right ml-1"></i>
+                    <a href="checkout.php" class="bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition text-center">
+                        <i class="fas fa-shopping-bag mr-1"></i> Passer commande
                     </a>
                 </div>
             </div>
+        </form>
+
+        <!-- Informations complémentaires -->
+        <div class="mt-8 p-4 bg-gray-100 rounded-lg">
+            <h3 class="text-lg font-bold mb-2">Informations importantes:</h3>
+            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                <li>Toutes les cartes sont livrées avec une sleeve de protection.</li>
+                <li>Pour les cartes de plus de 2.00 CHF, un toploader est également inclus.</li>
+                <li>Frais de port inclus pour toute commande en Suisse.</li>
+                <li>La livraison prend généralement entre 3 et 7 jours ouvrables.</li>
+                <li>Paiement par virement bancaire, TWINT ou en espèces (remise en main propre).</li>
+            </ul>
         </div>
     <?php endif; ?>
 </div>
@@ -140,21 +186,15 @@ var_dump($_SESSION['cart']);
 
                 input.value = Math.min(maxValue, Math.max(1, currentValue + increment));
 
-                // Mettre à jour le panier
-                const cartItem = this.closest('.cart-item');
-                if (cartItem) {
-                    const cardId = cartItem.dataset.cardId;
-                    const condition = cartItem.dataset.condition || '';
-
-                    // Debug pour vérifier les valeurs
-                    console.log("Mise à jour:", cardId, condition, input.value);
-
-                    updateCartItem(cardId, condition, parseInt(input.value, 10));
-                }
+                // Trigger change event for cart-ajax.js to catch
+                const changeEvent = new Event('change', {
+                    bubbles: true
+                });
+                input.dispatchEvent(changeEvent);
             });
         });
 
-        // Mise à jour des quantités via input
+        // Validation des inputs de quantité
         document.querySelectorAll('.quantity-input').forEach(input => {
             input.addEventListener('change', function() {
                 const maxValue = parseInt(this.getAttribute('max') || '999', 10);
@@ -162,136 +202,21 @@ var_dump($_SESSION['cart']);
 
                 if (currentValue > maxValue) {
                     this.value = maxValue;
-                    currentValue = maxValue;
                     showNotification(`Quantité limitée à ${maxValue} en stock`, "error");
                 } else if (currentValue < 1) {
                     this.value = 1;
-                    currentValue = 1;
-                }
-
-                // Mettre à jour le panier
-                const cartItem = this.closest('.cart-item');
-                if (cartItem) {
-                    const cardId = cartItem.dataset.cardId;
-                    const condition = cartItem.dataset.condition || '';
-
-                    // Debug pour vérifier les valeurs
-                    console.log("Mise à jour via input:", cardId, condition, currentValue);
-
-                    updateCartItem(cardId, condition, currentValue);
                 }
             });
         });
 
-        // Gestion des boutons de suppression
+        // Gestion de la suppression d'articles
         document.querySelectorAll('.remove-from-cart').forEach(button => {
             button.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                const cartItem = this.closest('.cart-item');
-                if (!cartItem) return;
-
-                const cardId = cartItem.dataset.cardId;
-                // Assurez-vous que data-condition est bien défini dans votre HTML
-                const condition = cartItem.dataset.condition || '';
-
-                // Debug pour vérifier les valeurs
-                console.log("Suppression:", cardId, condition);
-
-                removeFromCart(cardId, condition, cartItem);
+                if (!confirm('Êtes-vous sûr de vouloir supprimer cet article de votre panier?')) {
+                    e.preventDefault();
+                }
             });
         });
-
-        // Fonction pour mettre à jour un article
-        function updateCartItem(cardId, condition, quantity) {
-            fetch("cart-ajax.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: `action=update&card_id=${cardId}&condition=${condition}&quantity=${quantity}`,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Mettre à jour le sous-total
-                        const cartItem = document.querySelector(`.cart-item[data-card-id="${cardId}"][data-condition="${condition}"]`);
-                        if (cartItem) {
-                            const subtotalElement = cartItem.querySelector('.subtotal');
-                            if (subtotalElement) {
-                                subtotalElement.textContent = data.item_subtotal;
-                            }
-                        }
-
-                        // Mettre à jour le total du panier
-                        const cartTotalElement = document.querySelector('.cart-total');
-                        if (cartTotalElement) {
-                            cartTotalElement.textContent = data.cart_total;
-                        }
-
-                        // Mettre à jour le compteur du panier
-                        updateCartCount(data.cart_count);
-                    } else {
-                        showNotification("Erreur: " + data.message, "error");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    showNotification("Une erreur est survenue", "error");
-                });
-        }
-
-        // Fonction pour supprimer un article
-        function removeFromCart(cardId, condition, cartItemElement) {
-            fetch("cart-ajax.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: `action=remove&card_id=${cardId}&condition=${condition}`,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Supprimer l'élément du DOM
-                        cartItemElement.remove();
-
-                        // Mettre à jour le total du panier
-                        const cartTotalElement = document.querySelector('.cart-total');
-                        if (cartTotalElement) {
-                            cartTotalElement.textContent = data.cart_total;
-                        }
-
-                        // Mettre à jour le compteur du panier
-                        updateCartCount(data.cart_count);
-
-                        // Si le panier est vide, recharger la page
-                        if (data.cart_count === 0) {
-                            location.reload();
-                        }
-
-                        showNotification("Article supprimé du panier", "success");
-                    } else {
-                        showNotification("Erreur: " + data.message, "error");
-                    }
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    showNotification("Une erreur est survenue", "error");
-                });
-        }
-
-        // Fonction pour mettre à jour le compteur du panier
-        function updateCartCount(count) {
-            const cartCountElement = document.querySelector(".fa-shopping-cart")?.nextElementSibling;
-            if (cartCountElement) {
-                if (count > 0) {
-                    cartCountElement.textContent = count;
-                } else {
-                    cartCountElement.remove();
-                }
-            }
-        }
 
         // Fonction pour afficher des notifications
         function showNotification(message, type) {
