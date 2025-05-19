@@ -547,10 +547,21 @@ function getCartItems()
     $cartItems = [];
 
     foreach ($_SESSION['cart'] as $key => $quantity) {
-        // Extraire l'ID de la carte et la condition de la clé composite
-        list($cardId, $condition) = explode('|', $key);
+        // Assurez-vous que la clé a un format valide
+        if (strpos($key, '|') === false) {
+            continue; // Ignorer les clés invalides
+        }
 
-        // Récupérer les informations de base de la carte
+        // Extraire l'ID de la carte et la condition
+        list($cardId, $condition) = explode('|', $key);
+        $cardId = (int)$cardId; // Conversion explicite en entier
+
+        // Vérifier que l'ID est valide
+        if ($cardId <= 0) {
+            continue; // Ignorer les IDs invalides
+        }
+
+        // Récupérer les informations de la carte
         $stmt = $conn->prepare("
             SELECT c.*, s.name as series_name 
             FROM cards c 
@@ -560,23 +571,32 @@ function getCartItems()
         $stmt->execute([$cardId]);
         $card = $stmt->fetch();
 
-        if ($card) {
-            // Récupérer les informations spécifiques à l'état
-            $stmt = $conn->prepare("
-                SELECT * FROM card_conditions 
-                WHERE card_id = ? AND condition_code = ?
-            ");
-            $stmt->execute([$cardId, $condition]);
-            $conditionData = $stmt->fetch();
-
-            if ($conditionData) {
-                $item = array_merge($card, $conditionData);
-                $item['cart_quantity'] = $quantity;
-                $item['subtotal'] = $item['price'] * $quantity;
-                $item['cart_key'] = $key;
-                $cartItems[] = $item;
-            }
+        if (!$card) {
+            // La carte n'existe pas, on pourrait la supprimer du panier
+            unset($_SESSION['cart'][$key]);
+            continue;
         }
+
+        // Récupérer les informations de condition
+        $stmt = $conn->prepare("
+            SELECT * FROM card_conditions 
+            WHERE card_id = ? AND condition_code = ?
+        ");
+        $stmt->execute([$cardId, $condition]);
+        $conditionData = $stmt->fetch();
+
+        if (!$conditionData) {
+            // La condition n'existe pas pour cette carte
+            unset($_SESSION['cart'][$key]);
+            continue;
+        }
+
+        // Combiner les informations de la carte et de sa condition
+        $item = array_merge($card, $conditionData);
+        $item['cart_quantity'] = $quantity;
+        $item['subtotal'] = $item['price'] * $quantity;
+        $item['condition_code'] = $condition; // Assurez-vous que cette propriété existe
+        $cartItems[] = $item;
     }
 
     return $cartItems;
