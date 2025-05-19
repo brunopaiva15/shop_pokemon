@@ -14,6 +14,12 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 // Définir le titre de la page
 $pageTitle = 'Accueil';
 
+// Vérifier si on a une recherche
+$searchTerm = isset($_GET['q']) ? sanitizeInput($_GET['q']) : '';
+if (!empty($searchTerm)) {
+    $pageTitle = 'Recherche: ' . htmlspecialchars($searchTerm);
+}
+
 // Inclure les filtres
 $includeFiltersScript = true;
 
@@ -60,11 +66,8 @@ if ($currentSeries) {
     $pageTitle = 'Série : ' . htmlspecialchars($currentSeries['name']);
 }
 
-// Récupérer le nombre total de cartes d'abord (sans pagination)
-$totalCardsBeforeFilters = countAllCards($seriesId, $condition);
-
-// MODIFICATION : Nouvelle fonction pour obtenir toutes les cartes filtrées en une seule requête
-function getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder)
+// Fonction pour récupérer toutes les cartes filtrées en une seule requête
+function getAllFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder)
 {
     $conn = getDbConnection();
 
@@ -76,6 +79,16 @@ function getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin
         JOIN card_conditions cc ON c.id = cc.card_id
         WHERE cc.quantity > 0";
     $params = [];
+
+    // Ajouter la condition de recherche si un terme est fourni
+    if (!empty($searchTerm)) {
+        $query .= " AND (c.name LIKE ? OR c.card_number LIKE ? OR c.description LIKE ? OR s.name LIKE ?)";
+        $searchParam = "%$searchTerm%";
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+    }
 
     // Ajouter les conditions de filtrage
     if ($seriesId) {
@@ -132,7 +145,7 @@ function getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin
 }
 
 // Récupérer toutes les cartes filtrées en une seule requête
-$allFilteredCards = getAllFilteredCards($seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder);
+$allFilteredCards = getAllFilteredCards($searchTerm, $seriesId, $condition, $rarity, $variant, $priceMin, $priceMax, $sortBy, $sortOrder);
 
 // Compter le nombre total après tous les filtres
 $totalCards = count($allFilteredCards);
@@ -186,6 +199,15 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <img src="assets/images/Card_Condition_Table_FR.png" alt="Guide des états des cartes" class="w-full">
     </div>
 </div>
+
+<?php if (!empty($searchTerm)): ?>
+    <!-- Résultats de recherche -->
+    <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+        <p class="text-gray-600">
+            <span class="font-semibold"><?php echo $totalCards; ?></span> résultat<?php echo $totalCards > 1 ? 's' : ''; ?> pour la recherche "<span class="font-semibold"><?php echo htmlspecialchars($searchTerm); ?></span>"
+        </p>
+    </div>
+<?php endif; ?>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
     <!-- Sidebar avec filtres -->
@@ -305,7 +327,9 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <!-- Titre et barre d'outils mobile -->
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">
-                <?php if ($currentSeries): ?>
+                <?php if (!empty($searchTerm)): ?>
+                    Résultats de recherche
+                <?php elseif ($currentSeries): ?>
                     Série : <?php echo htmlspecialchars($currentSeries['name']); ?>
                 <?php else: ?>
                     Toutes les cartes
@@ -471,6 +495,10 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 <script>
     // Mettre à jour le fichier JavaScript pour inclure le filtre de rareté
     document.addEventListener('DOMContentLoaded', function() {
+        // Récupérer le terme de recherche de l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get('q');
+
         // Ajout du filtre de rareté
         const rarityFilter = document.getElementById('rarity-filter');
         const variantFilter = document.getElementById('variant-filter');
@@ -479,6 +507,11 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         window.applyFilters = function() {
             const params = new URLSearchParams(window.location.search);
 
+            // Conserver le terme de recherche
+            if (searchTerm) {
+                params.set('q', searchTerm);
+            }
+
             updateUrlParam(params, 'series', document.getElementById('series-filter').value);
             updateUrlParam(params, 'condition', document.getElementById('condition-filter').value);
             updateUrlParam(params, 'rarity', rarityFilter.value);
@@ -486,12 +519,6 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             updateUrlParam(params, 'sort', document.getElementById('sort-filter').value);
             updateUrlParam(params, 'price_min', document.getElementById('price-min').value);
             updateUrlParam(params, 'price_max', document.getElementById('price-max').value);
-
-            // Conserver le paramètre de recherche s'il existe
-            const searchQuery = params.get('q');
-            if (searchQuery) {
-                params.set('q', searchQuery);
-            }
 
             // Rediriger vers la nouvelle URL
             window.location.href = window.location.pathname + '?' + params.toString();
@@ -508,11 +535,8 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
             document.getElementById('price-max').value = '';
 
             // Conserver uniquement le paramètre de recherche s'il existe
-            const params = new URLSearchParams(window.location.search);
-            const searchQuery = params.get('q');
-
-            if (searchQuery) {
-                window.location.href = window.location.pathname + '?q=' + encodeURIComponent(searchQuery);
+            if (searchTerm) {
+                window.location.href = window.location.pathname + '?q=' + encodeURIComponent(searchTerm);
             } else {
                 window.location.href = window.location.pathname;
             }

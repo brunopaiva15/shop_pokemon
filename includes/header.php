@@ -48,7 +48,7 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
 
                 <!-- Barre de recherche mobile -->
                 <div class="md:hidden mb-2">
-                    <form action="<?php echo SITE_URL; ?>/search.php" method="GET" class="flex">
+                    <form action="<?php echo SITE_URL; ?>/index.php" method="GET" class="flex">
                         <input type="text" name="q" placeholder="Rechercher une carte..."
                             class="w-full px-3 py-1 text-sm rounded-l-md text-gray-800 focus:outline-none">
                         <button type="submit" class="bg-yellow-500 text-white px-2 py-1 rounded-r-md hover:bg-yellow-600 transition">
@@ -59,7 +59,7 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
 
                 <!-- Partie droite: Recherche desktop et panier -->
                 <div class="hidden md:flex items-center space-x-4">
-                    <form action="<?php echo SITE_URL; ?>/search.php" method="GET" class="flex">
+                    <form action="<?php echo SITE_URL; ?>/index.php" method="GET" class="flex">
                         <input type="text" name="q" placeholder="Rechercher une carte..."
                             class="px-4 py-2 rounded-l-lg text-gray-800 focus:outline-none">
                         <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded-r-lg hover:bg-yellow-600 transition">
