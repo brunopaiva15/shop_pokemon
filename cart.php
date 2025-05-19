@@ -11,6 +11,8 @@ require_once 'includes/functions.php';
 $cartItems = getCartItems();
 $cartTotal = getCartTotal();
 require_once 'includes/header.php';
+
+var_dump($_SESSION['cart']);
 ?>
 
 <div class="cart-container bg-white rounded-lg shadow-lg p-6">
