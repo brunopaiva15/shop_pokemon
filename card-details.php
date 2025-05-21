@@ -29,28 +29,6 @@ $cardConditions = $stmt->fetchAll();
 $ip = $_SERVER['REMOTE_ADDR'];
 $now = date('Y-m-d H:i:s');
 
-// Supprimer les vues expirées (> 2 min)
-$stmt = $conn->prepare("DELETE FROM page_views WHERE last_active < DATE_SUB(NOW(), INTERVAL 2 MINUTE)");
-$stmt->execute();
-
-// Vérifier si l'IP est déjà enregistrée
-$stmt = $conn->prepare("SELECT id FROM page_views WHERE ip_address = ? AND card_id = ?");
-$stmt->execute([$ip, $cardId]);
-$existing = $stmt->fetch();
-
-if ($existing) {
-    $stmt = $conn->prepare("UPDATE page_views SET last_active = ? WHERE id = ?");
-    $stmt->execute([$now, $existing['id']]);
-} else {
-    $stmt = $conn->prepare("INSERT INTO page_views (card_id, ip_address, last_active) VALUES (?, ?, ?)");
-    $stmt->execute([$cardId, $ip, $now]);
-}
-
-// Nombre de visiteurs actifs
-$stmt = $conn->prepare("SELECT COUNT(*) FROM page_views WHERE card_id = ?");
-$stmt->execute([$cardId]);
-$activeUsers = (int)$stmt->fetchColumn();
-
 // Titre de la page
 $pageTitle = htmlspecialchars($card['name']);
 require_once 'includes/header.php';
