@@ -618,6 +618,53 @@ function getCartItems()
     return $items;
 }
 
+function getCartItemsWithStripeData()
+{
+    initCart();
+
+    if (empty($_SESSION['cart'])) {
+        return [];
+    }
+
+    $items = [];
+    $conn = getDbConnection();
+
+    foreach ($_SESSION['cart'] as $cartItem) {
+        $stmt = $conn->prepare("
+            SELECT c.*, s.name as series_name, cc.price, cc.quantity as available_quantity 
+            FROM cards c 
+            JOIN series s ON c.series_id = s.id
+            JOIN card_conditions cc ON c.id = cc.card_id
+            WHERE c.id = ? AND cc.condition_code = ?
+        ");
+        $stmt->execute([$cartItem['card_id'], $cartItem['condition_code']]);
+        $card = $stmt->fetch();
+
+        if ($card) {
+            $availableQuantity = (int)$card['available_quantity'];
+            $cartQuantity = min($cartItem['quantity'], $availableQuantity);
+
+            $items[] = [
+                'cart_id' => $cartItem['id'],
+                'id' => $card['id'],
+                'name' => $card['name'],
+                'card_number' => $card['card_number'],
+                'series_name' => $card['series_name'],
+                'series_id' => $card['series_id'],
+                'image_url' => $card['image_url'],
+                'condition_code' => $cartItem['condition_code'],
+                'price' => $card['price'],
+                'cart_quantity' => $cartQuantity,
+                'available_quantity' => $availableQuantity,
+                'stripe_product_id' => $card['stripe_product_id'],
+                'subtotal' => $card['price'] * $cartQuantity
+            ];
+        }
+    }
+
+    return $items;
+}
+
 function getCartTotal()
 {
     $items = getCartItems();
