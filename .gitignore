@@ -1,1 +1,6 @@
 includes/config.php
+vendor/
+create-stripe-link.php
+success.php
+composer.json
+composer.lock

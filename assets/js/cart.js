@@ -70,28 +70,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Fonction pour afficher des notifications
   function showNotification(message, type) {
-    const existing = document.querySelector(".notification");
-    if (existing) existing.remove();
-
-    const notification = document.createElement("div");
-    notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-      type === "success" ? "bg-green-500" : "bg-red-500"
-    } text-white transition-opacity duration-300`;
-    notification.innerHTML = `
-          <div class="flex items-center">
-              <i class="fas ${
-                type === "success" ? "fa-check-circle" : "fa-exclamation-circle"
-              } mr-2"></i>
-              <span>${message}</span>
-          </div>
-      `;
-
-    document.body.appendChild(notification);
-
-    // Faire disparaître après un délai
-    setTimeout(() => {
-      notification.classList.add("opacity-0");
-      setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    Swal.fire({
+      toast: true,
+      position: "top-end",
+      icon: type === "success" ? "success" : "error",
+      title: message,
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+      customClass: {
+        popup: "swal2-custom-toast",
+      },
+      didOpen: (toast) => {
+        toast.addEventListener("mouseenter", () => Swal.close());
+      },
+    });
   }
 });

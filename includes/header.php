@@ -1,7 +1,7 @@
 <?php
 // Cacher les erreurs pour la production
-error_reporting(0);
 ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 
 // includes/header.php
 session_start();
@@ -25,6 +25,8 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
     <link rel="icon" href="<?php echo SITE_URL; ?>/assets/images/favicon.ico" type="image/x-icon">
     <!-- JavaScript -->
     <script src="<?php echo SITE_URL; ?>/assets/js/cart.js"></script>
+    <!-- SweetAlert2 pour les alertes -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">

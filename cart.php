@@ -63,6 +63,7 @@ if (isset($_GET['updated'])) {
                         L\'article a été ajouté au panier avec succès.
                     </div>';
 }
+
 ?>
 
 <div class="bg-white rounded-lg shadow-lg p-6" id="cart-container">
@@ -168,9 +169,11 @@ if (isset($_GET['updated'])) {
                     <button type="button" id="clear-cart-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
                         <i class="fas fa-trash mr-2"></i> Vider le panier
                     </button>
-                    <a href="checkout.php" class="bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-900 transition">
-                        <i class="fas fa-shopping-cart mr-2"></i> Commander
-                    </a>
+                    <form method="post" action="create-stripe-link.php">
+                        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
+                            <i class="fas fa-credit-card mr-2"></i> Payer avec Stripe
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -462,7 +465,23 @@ if (isset($_GET['updated'])) {
             });
         });
     });
+
+    function showStripeRedirectMessage() {
+        const existing = document.querySelector('.notification');
+        if (existing) existing.remove();
+
+        const notification = document.createElement('div');
+        notification.className = 'notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 bg-blue-600 text-white transition-opacity duration-300';
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-spinner fa-spin mr-2"></i>
+                <span>Redirection vers Stripe en cours...</span>
+            </div>
+        `;
+        document.body.appendChild(notification);
+    }
 </script>
+
 
 <?php
 // Inclure le pied de page

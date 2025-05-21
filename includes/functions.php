@@ -430,10 +430,19 @@ function getOrderById($id)
 function getOrderItems($orderId)
 {
     $conn = getDbConnection();
-    $stmt = $conn->prepare("SELECT oi.*, c.name, c.card_number, c.image_url 
-                           FROM order_items oi 
-                           JOIN cards c ON oi.card_id = c.id 
-                           WHERE oi.order_id = ?");
+    $stmt = $conn->prepare("
+        SELECT 
+            oi.*, 
+            c.name, 
+            c.card_number, 
+            c.image_url, 
+            s.name AS series_name,
+            s.code AS series_code
+        FROM order_items oi
+        JOIN cards c ON oi.card_id = c.id
+        JOIN series s ON c.series_id = s.id
+        WHERE oi.order_id = ?
+    ");
     $stmt->execute([$orderId]);
     return $stmt->fetchAll();
 }

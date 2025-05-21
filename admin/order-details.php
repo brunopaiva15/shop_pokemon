@@ -1,10 +1,9 @@
 <?php
 // admin/order-details.php
 
-// Inclure le fichier de fonctions nécessaires
 require_once '../includes/functions.php';
+require_once 'includes/header.php';
 
-// Vérifier si l'ID de la commande est fourni
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     $_SESSION['flash_message'] = 'ID de commande non valide';
     $_SESSION['flash_type'] = 'error';
@@ -13,14 +12,8 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 }
 
 $orderId = (int)$_GET['id'];
-
-// Inclure l'en-tête (qui inclut aussi les fonctions)
-require_once 'includes/header.php';
-
-// Récupérer les informations de la commande
 $order = getOrderById($orderId);
 
-// Si la commande n'existe pas, rediriger vers la liste des commandes
 if (!$order) {
     $_SESSION['flash_message'] = 'Commande non trouvée';
     $_SESSION['flash_type'] = 'error';
@@ -28,13 +21,9 @@ if (!$order) {
     exit;
 }
 
-// Récupérer les articles de la commande
 $orderItems = getOrderItems($orderId);
-
-// Définir le titre de la page
 $pageTitle = 'Commande #' . $orderId;
 
-// Définir les couleurs et textes des statuts
 $statusClasses = [
     'pending'    => 'bg-yellow-100 text-yellow-800',
     'processing' => 'bg-blue-100 text-blue-800',
@@ -49,31 +38,25 @@ $statusText = [
     'cancelled'  => 'Annulée'
 ];
 
-// Traitement du formulaire pour mettre à jour le statut
 $success = false;
 $error   = '';
-
-// Conserver l'ancien statut pour gérer le restock lors de l'annulation
 $oldStatus = $order['status'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
     $newStatus = sanitizeInput($_POST['status']);
 
-    // Vérifier que le statut est valide
     if (array_key_exists($newStatus, $statusText)) {
         if (updateOrderStatus($orderId, $newStatus)) {
-            // Si on passe en annulé depuis un autre statut, on remet en stock
             if ($oldStatus !== 'cancelled' && $newStatus === 'cancelled') {
                 $items = getOrderItems($orderId);
                 foreach ($items as $item) {
-                    $card      = getCardById($item['card_id']);
-                    $newQty    = $card['quantity'] + $item['quantity'];
+                    $card = getCardById($item['card_id']);
+                    $newQty = $card['quantity'] + $item['quantity'];
                     updateCardStock($item['card_id'], $newQty);
                 }
             }
-
-            $success            = true;
-            $order['status']    = $newStatus;
+            $success = true;
+            $order['status'] = $newStatus;
         } else {
             $error = 'Erreur lors de la mise à jour du statut';
         }
@@ -104,10 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
     <?php endif; ?>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Informations de la commande -->
         <div>
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Informations de la commande</h3>
-
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-gray-600">ID de commande:</span>
@@ -124,141 +105,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
                     <span class="font-bold"><?php echo formatPrice($order['total_amount']); ?></span>
                 </div>
 
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Méthode de paiement:</span>
-                    <span><?php echo htmlspecialchars($order['payment_method']); ?></span>
-                </div>
+                <?php if (!empty($order['stripe_payment_intent'])): ?>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Stripe :</span>
+                        <a href="https://dashboard.stripe.com/payments/<?php echo htmlspecialchars($order['stripe_payment_intent']); ?>" target="_blank" class="text-blue-600 underline">Voir le paiement Stripe</a>
+                    </div>
+                <?php elseif (!empty($order['stripe_link_id'])): ?>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Stripe :</span>
+                        <span class="text-gray-500 italic">Paiement non finalisé</span>
+                    </div>
+                <?php endif; ?>
 
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-600">Statut:</span>
-                    <form method="POST" action="order-details.php?id=<?php echo $orderId; ?>" class="flex items-center space-x-2">
-                        <select name="status" class="p-1 border border-gray-300 rounded-md text-sm">
-                            <?php foreach ($statusText as $key => $value): ?>
-                                <option value="<?php echo $key; ?>" <?php echo $order['status'] == $key ? 'selected' : ''; ?>>
-                                    <?php echo $value; ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button type="submit" class="bg-blue-600 text-white p-1 rounded-md text-sm">
-                            <i class="fas fa-save"></i>
-                        </button>
-                    </form>
-                </div>
+                <form method="post" class="mt-4">
+                    <label for="status" class="block text-sm font-medium text-gray-700">Statut de la commande :</label>
+                    <select name="status" id="status" class="mt-1 p-2 border border-gray-300 rounded-md">
+                        <?php foreach ($statusText as $value => $label): ?>
+                            <option value="<?php echo $value; ?>" <?php echo $order['status'] === $value ? 'selected' : ''; ?>>
+                                <?php echo $label; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit" class="ml-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Mettre à jour</button>
+                </form>
             </div>
         </div>
 
-        <!-- Informations du client -->
         <div>
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Informations du client</h3>
-
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-gray-600">Nom:</span>
-                    <span><?php echo htmlspecialchars($order['customer_name']); ?></span>
+                    <span><?php echo htmlspecialchars($order['customer_name']) ?: '<span class="italic text-gray-500">Non spécifié</span>'; ?></span>
                 </div>
-
                 <div class="flex justify-between">
                     <span class="text-gray-600">Email:</span>
-                    <a href="mailto:<?php echo htmlspecialchars($order['customer_email']); ?>" class="text-blue-600 hover:underline">
-                        <?php echo htmlspecialchars($order['customer_email']); ?>
-                    </a>
+                    <?php if (!empty($order['customer_email'])): ?>
+                        <a href="mailto:<?php echo htmlspecialchars($order['customer_email']); ?>" class="text-blue-600 hover:underline">
+                            <?php echo htmlspecialchars($order['customer_email']); ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="italic text-gray-500">Non spécifié</span>
+                    <?php endif; ?>
                 </div>
-
                 <div>
                     <span class="text-gray-600">Adresse:</span>
                     <div class="mt-1 border border-gray-200 rounded-md p-3 bg-gray-50">
-                        <?php echo nl2br(htmlspecialchars($order['customer_address'])); ?>
+                        <?php echo nl2br(htmlspecialchars($order['customer_address'] ?? 'Non spécifiée')); ?>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Articles de la commande -->
-<div class="bg-white rounded-lg shadow-md p-6">
-    <h3 class="text-lg font-semibold mb-4 border-b pb-2">Articles commandés</h3>
-
-    <?php if (empty($orderItems)): ?>
-        <p class="text-gray-500">Aucun article dans cette commande.</p>
-    <?php else: ?>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carte</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Numéro</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix unitaire</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantité</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sous-total</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <?php foreach ($orderItems as $item): ?>
+        <div class="mt-10">
+            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Cartes commandées</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200 rounded">
+                    <thead class="bg-gray-100">
                         <tr>
-                            <td class="px-4 py-2 whitespace-nowrap">
-                                <div class="w-12 h-12 bg-gray-100 rounded-md overflow-hidden">
-                                    <img src="<?php echo SITE_URL . '/' . ($item['image_url'] ?: 'assets/images/card-placeholder.png'); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" class="w-full h-full object-contain">
-                                </div>
-                            </td>
-                            <td class="px-4 py-2 whitespace-nowrap font-medium">
-                                <a href="../card-details.php?id=<?php echo $item['card_id']; ?>" target="_blank" class="text-blue-600 hover:underline">
-                                    <?php echo htmlspecialchars($item['name']); ?>
-                                </a>
-                            </td>
-                            <td class="px-4 py-2 whitespace-nowrap"><?php echo htmlspecialchars($item['card_number']); ?></td>
-                            <td class="px-4 py-2 whitespace-nowrap"><?php echo formatPrice($item['price']); ?></td>
-                            <td class="px-4 py-2 whitespace-nowrap"><?php echo $item['quantity']; ?></td>
-                            <td class="px-4 py-2 whitespace-nowrap font-medium"><?php echo formatPrice($item['price'] * $item['quantity']); ?></td>
+                            <th class="px-4 py-2 text-left">Image</th>
+                            <th class="px-4 py-2 text-left">Nom</th>
+                            <th class="px-4 py-2 text-left">Numéro</th>
+                            <th class="px-4 py-2 text-left">Série</th>
+                            <th class="px-4 py-2 text-left">Condition</th>
+                            <th class="px-4 py-2 text-right">Quantité</th>
+                            <th class="px-4 py-2 text-right">Prix unitaire</th>
+                            <th class="px-4 py-2 text-right">Total</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-                <tfoot>
-                    <tr class="bg-gray-50">
-                        <td colspan="5" class="px-4 py-2 text-right font-bold">Total:</td>
-                        <td class="px-4 py-2 font-bold"><?php echo formatPrice($order['total_amount']); ?></td>
-                    </tr>
-                </tfoot>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($orderItems as $item): ?>
+                            <tr class="border-t">
+                                <td class="px-4 py-2">
+                                    <img src="<?= htmlspecialchars($item['image_url'] ?? 'assets/images/card-placeholder.png') ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="w-12 h-12 object-contain">
+                                </td>
+                                <td class="px-4 py-2"><?= htmlspecialchars($item['name']) ?></td>
+                                <td class="px-4 py-2"><?= htmlspecialchars($item['card_number']) ?></td>
+                                <td class="px-4 py-2"><?= htmlspecialchars($item['series_name']) ?> (<?= htmlspecialchars($item['series_code']) ?>)</td>
+                                <td class="px-4 py-2"><?= CARD_CONDITIONS[$item['condition_code']] ?? 'Inconnue' ?></td>
+                                <td class="px-4 py-2 text-right"><?= (int) $item['quantity'] ?></td>
+                                <td class="px-4 py-2 text-right"><?= formatPrice($item['price']) ?></td>
+                                <td class="px-4 py-2 text-right"><?= formatPrice($item['quantity'] * $item['price']) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    <?php endif; ?>
-
-    <!-- Boutons d'action -->
-    <div class="mt-6 flex justify-end space-x-2">
-        <button type="button" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition" onclick="window.print();">
-            <i class="fas fa-print mr-1"></i> Imprimer
-        </button>
-
-        <a href="mailto:<?php echo htmlspecialchars($order['customer_email']); ?>" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition">
-            <i class="fas fa-envelope mr-1"></i> Contacter le client
-        </a>
     </div>
 </div>
 
-<style>
-    @media print {
-
-        header,
-        footer,
-        .no-print,
-        button,
-        a {
-            display: none !important;
-        }
-
-        body {
-            background-color: white !important;
-        }
-
-        .bg-white {
-            box-shadow: none !important;
-            border: none !important;
-        }
-    }
-</style>
-
-<?php
-// Inclure le pied de page
-require_once 'includes/footer.php';
-?>
+<?php require_once 'includes/footer.php'; ?>
