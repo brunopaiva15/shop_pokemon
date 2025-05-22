@@ -68,6 +68,23 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Gestion des boutons quantité (+/-)
+  document.querySelectorAll(".quantity-modifier").forEach((button) => {
+    button.addEventListener("click", function () {
+      const selector = this.closest(".quantity-selector");
+      if (!selector) return;
+
+      const input = selector.querySelector("input");
+      if (!input) return;
+
+      const currentValue = parseInt(input.value, 10) || 1;
+      const increment = this.dataset.modifier === "plus" ? 1 : -1;
+      const maxValue = parseInt(input.getAttribute("max") || "999", 10);
+
+      input.value = Math.min(maxValue, Math.max(1, currentValue + increment));
+    });
+  });
+
   // Fonction pour afficher des notifications
   function showNotification(message, type) {
     Swal.fire({

@@ -299,14 +299,10 @@ if (isset($_GET['updated'])) {
                         }
 
                         updateCartCounter(data.cart_count);
-                        showNotification('Panier mis à jour avec succès', 'success');
-                    } else {
-                        showNotification(data.message || 'Erreur lors de la mise à jour', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    showNotification('Une erreur est survenue', 'error');
                 })
                 .finally(() => {
                     if (row) row.style.opacity = "1";
@@ -339,16 +335,12 @@ if (isset($_GET['updated'])) {
 
                         updateCartCounter(data.cart_count);
                         if (data.cart_empty) showEmptyCart();
-
-                        showNotification('Article supprimé du panier', 'success');
                     } else {
-                        showNotification(data.message || 'Erreur lors de la suppression', 'error');
                         if (row) row.style.opacity = "1";
                     }
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    showNotification('Une erreur est survenue', 'error');
                     if (row) row.style.opacity = "1";
                 });
         }
@@ -369,15 +361,12 @@ if (isset($_GET['updated'])) {
                     if (data.success) {
                         updateCartCounter(0);
                         showEmptyCart();
-                        showNotification('Votre panier a été vidé', 'success');
                     } else {
-                        showNotification(data.message || 'Erreur lors du vidage du panier', 'error');
                         if (cartContent) cartContent.style.opacity = "1";
                     }
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    showNotification('Une erreur est survenue', 'error');
                     if (cartContent) cartContent.style.opacity = "1";
                 });
         }
@@ -411,31 +400,6 @@ if (isset($_GET['updated'])) {
                     counter.classList.add("hidden");
                 }
             });
-        }
-
-        function showNotification(message, type) {
-            const existing = document.querySelector('.notification');
-            if (existing) existing.remove();
-
-            const notification = document.createElement('div');
-            notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
-                type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            } text-white transition-opacity duration-300`;
-            notification.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas ${
-                        type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
-                    } mr-2"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.classList.add('opacity-0');
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
         }
 
         document.querySelectorAll('.quantity-modifier').forEach(button => {

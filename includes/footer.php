@@ -6,7 +6,7 @@
             <div>
                 <h3 class="text-xl font-bold mb-4">BDPokéCards</h3>
                 <p class="text-gray-300">Votre boutique spécialisée en cartes Pokémon d’occasion en excellent état, directement sorties du booster et protégées sous sleeve dès l’ouverture.</p>
-                 <p class="mt-2 text-gray-300">Basé en Suisse.</p>
+                <p class="mt-2 text-gray-300">Basé en Suisse.</p>
             </div>
 
             <div>
@@ -34,7 +34,6 @@
 </footer>
 
 <!-- Scripts JS -->
-<script src="<?php echo SITE_URL; ?>/assets/js/cart.js"></script>
 <?php if (isset($includeFiltersScript) && $includeFiltersScript): ?>
     <script src="<?php echo SITE_URL; ?>/assets/js/filters.js"></script>
 <?php endif; ?>

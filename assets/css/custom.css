@@ -128,3 +128,8 @@
 .action-button:hover {
     opacity: 0.9;
 }
+
+.condition-badge.condition-multiple {
+    background-color: #9333ea;
+    color: white;
+}
