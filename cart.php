@@ -217,7 +217,7 @@ if (isset($_GET['updated'])) {
                 message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
                            <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
                            avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
-            } else if (remise > 2) {
+            } else if (remise > 1) {
                 message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
                            Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
                            <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
