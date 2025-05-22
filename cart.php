@@ -13,6 +13,9 @@ require_once 'includes/header.php';
 $cartItems = getCartItems();
 $cartTotal = getCartTotal();
 
+// Calcul de la remise automatique
+$remiseCHF = floor($cartTotal / 5);
+
 // Traitement des actions sur le panier (pour les requêtes non-AJAX)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
@@ -70,6 +73,13 @@ if (isset($_GET['updated'])) {
     <h1 class="text-3xl font-bold mb-6">Votre panier</h1>
 
     <?php echo $notification; ?>
+
+    <?php if (!empty($cartItems)): ?>
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6 text-sm">
+            💸 <strong><?php echo $remiseCHF; ?> CHF</strong> de remise automatique sur cette commande grâce à notre offre : 
+            <em>1 CHF offert tous les 5 CHF d'achat</em> !
+        </div>
+    <?php endif; ?>
 
     <?php if (empty($cartItems)): ?>
         <!-- Panier vide -->
