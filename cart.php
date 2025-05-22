@@ -75,9 +75,8 @@ if (isset($_GET['updated'])) {
     <?php echo $notification; ?>
 
     <?php if (!empty($cartItems)): ?>
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6 text-sm">
-            💸 <strong><?php echo $remiseCHF; ?> CHF</strong> de remise automatique sur cette commande grâce à notre offre : 
-            <em>1 CHF offert tous les 5 CHF d'achat</em> !
+    <div id="dynamic-promo-message" class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6 text-sm">
+            <!-- Le message sera injecté ici par JS -->
         </div>
     <?php endif; ?>
 
@@ -190,60 +189,61 @@ if (isset($_GET['updated'])) {
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Fonction pour mettre à jour la quantité via AJAX
+    document.addEventListener('DOMContentLoaded', function () {
+        function updatePromoMessage() {
+            const totalCell = document.getElementById('cart-total');
+            const promoDiv = document.getElementById('dynamic-promo-message');
+
+            if (!totalCell || !promoDiv) return;
+
+            const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
+            const total = parseFloat(totalText);
+
+            if (isNaN(total)) return;
+
+            const remise = Math.floor(total / 5);
+            promoDiv.innerHTML = `💸 <strong>${remise} CHF</strong> de remise automatique sur cette commande grâce à notre offre : <em>1 CHF offert tous les 5 CHF d'achat</em> !`;
+        }
+
         function updateQuantity(itemId, newQuantity) {
-            // Créer un objet FormData pour l'envoi
             const formData = new FormData();
             formData.append('action', 'update_quantity');
             formData.append('item_id', itemId);
             formData.append('quantity', newQuantity);
 
-            // Afficher un indicateur de chargement
             const row = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
             if (row) row.style.opacity = "0.7";
 
-            // Envoyer la requête AJAX
             fetch('update-cart-ajax.php', {
-                    method: 'POST',
-                    body: formData
-                })
+                method: 'POST',
+                body: formData
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Mettre à jour l'interface
                         const input = document.querySelector(`input[data-item-id="${itemId}"]`);
                         if (input) input.value = data.quantity;
 
-                        // Mettre à jour le sous-total de la ligne
                         if (row) {
                             const subtotalCell = row.querySelector('.item-subtotal');
                             if (subtotalCell) subtotalCell.textContent = data.subtotal;
                         }
 
-                        // Mettre à jour le total général
                         const totalCell = document.getElementById('cart-total');
                         if (totalCell && data.cart_total) {
                             totalCell.textContent = data.cart_total;
                         }
 
-                        // Si la quantité est mise à zéro, supprimer la ligne
+                        updatePromoMessage();
+
                         if (data.quantity <= 0 && row) {
                             row.remove();
-
-                            // Si c'était le dernier article, afficher le message "panier vide"
-                            if (data.cart_empty) {
-                                showEmptyCart();
-                            }
+                            if (data.cart_empty) showEmptyCart();
                         }
 
-                        // Mettre à jour le compteur du panier
                         updateCartCounter(data.cart_count);
-
-                        // Afficher une notification de succès
                         showNotification('Panier mis à jour avec succès', 'success');
                     } else {
-                        // Afficher une notification d'erreur
                         showNotification(data.message || 'Erreur lors de la mise à jour', 'error');
                     }
                 })
@@ -252,12 +252,10 @@ if (isset($_GET['updated'])) {
                     showNotification('Une erreur est survenue', 'error');
                 })
                 .finally(() => {
-                    // Rétablir l'opacité normale
                     if (row) row.style.opacity = "1";
                 });
         }
 
-        // Fonction pour supprimer un article via AJAX
         function removeItem(itemId) {
             const formData = new FormData();
             formData.append('action', 'remove_item');
@@ -267,27 +265,23 @@ if (isset($_GET['updated'])) {
             if (row) row.style.opacity = "0.7";
 
             fetch('update-cart-ajax.php', {
-                    method: 'POST',
-                    body: formData
-                })
+                method: 'POST',
+                body: formData
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         if (row) row.remove();
 
-                        // Mettre à jour le total
                         const totalCell = document.getElementById('cart-total');
                         if (totalCell && data.cart_total) {
                             totalCell.textContent = data.cart_total;
                         }
 
-                        // Mettre à jour le compteur
-                        updateCartCounter(data.cart_count);
+                        updatePromoMessage();
 
-                        // Afficher "panier vide" si nécessaire
-                        if (data.cart_empty) {
-                            showEmptyCart();
-                        }
+                        updateCartCounter(data.cart_count);
+                        if (data.cart_empty) showEmptyCart();
 
                         showNotification('Article supprimé du panier', 'success');
                     } else {
@@ -302,7 +296,6 @@ if (isset($_GET['updated'])) {
                 });
         }
 
-        // Fonction pour vider le panier via AJAX
         function clearCart() {
             const formData = new FormData();
             formData.append('action', 'clear_cart');
@@ -311,18 +304,14 @@ if (isset($_GET['updated'])) {
             if (cartContent) cartContent.style.opacity = "0.7";
 
             fetch('update-cart-ajax.php', {
-                    method: 'POST',
-                    body: formData
-                })
+                method: 'POST',
+                body: formData
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Mettre à jour le compteur du panier
                         updateCartCounter(0);
-
-                        // Afficher le message "panier vide"
                         showEmptyCart();
-
                         showNotification('Votre panier a été vidé', 'success');
                     } else {
                         showNotification(data.message || 'Erreur lors du vidage du panier', 'error');
@@ -336,17 +325,14 @@ if (isset($_GET['updated'])) {
                 });
         }
 
-        // Fonction pour afficher l'état "panier vide"
         function showEmptyCart() {
             const cartContainer = document.getElementById('cart-container');
             if (cartContainer) {
                 cartContainer.innerHTML = `
                     <h1 class="text-3xl font-bold mb-6">Votre panier</h1>
-                    
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
                         Le panier a été vidé.
                     </div>
-                    
                     <div class="text-center py-12">
                         <i class="fas fa-shopping-cart text-gray-300 text-5xl mb-4"></i>
                         <h2 class="text-2xl font-bold mb-2">Votre panier est vide</h2>
@@ -359,7 +345,6 @@ if (isset($_GET['updated'])) {
             }
         }
 
-        // Fonction pour mettre à jour le compteur du panier
         function updateCartCounter(count) {
             const cartCounters = document.querySelectorAll(".cart-counter");
             cartCounters.forEach(counter => {
@@ -372,7 +357,6 @@ if (isset($_GET['updated'])) {
             });
         }
 
-        // Fonction pour afficher des notifications
         function showNotification(message, type) {
             const existing = document.querySelector('.notification');
             if (existing) existing.remove();
@@ -398,9 +382,8 @@ if (isset($_GET['updated'])) {
             }, 3000);
         }
 
-        // Gestion des boutons de quantité (+ / -)
         document.querySelectorAll('.quantity-modifier').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 const itemId = this.getAttribute('data-item-id');
                 const input = document.querySelector(`input[data-item-id="${itemId}"]`);
                 if (!input) return;
@@ -408,21 +391,15 @@ if (isset($_GET['updated'])) {
                 const currentValue = parseInt(input.value, 10) || 1;
                 const increment = this.dataset.modifier === 'plus' ? 1 : -1;
                 const maxValue = parseInt(input.getAttribute('max') || '999', 10);
-
-                // Calculer la nouvelle valeur
                 const newValue = Math.min(maxValue, Math.max(1, currentValue + increment));
-
-                // Mettre à jour visuellement l'input
                 input.value = newValue;
 
-                // Envoyer la mise à jour via AJAX
                 updateQuantity(itemId, newValue);
             });
         });
 
-        // Gestion des boutons de suppression d'article
         document.querySelectorAll('.remove-item').forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 const itemId = this.getAttribute('data-item-id');
                 if (confirm('Êtes-vous sûr de vouloir supprimer cet article du panier?')) {
                     removeItem(itemId);
@@ -430,49 +407,25 @@ if (isset($_GET['updated'])) {
             });
         });
 
-        // Gestion du bouton "Vider le panier"
         const clearCartBtn = document.getElementById('clear-cart-btn');
         if (clearCartBtn) {
-            clearCartBtn.addEventListener('click', function() {
+            clearCartBtn.addEventListener('click', function () {
                 if (confirm('Êtes-vous sûr de vouloir vider entièrement votre panier?')) {
                     clearCart();
                 }
             });
         }
 
-        // Gestion du bouton "Mettre à jour"
-        const updateCartBtn = document.getElementById('update-cart-btn');
-        if (updateCartBtn) {
-            updateCartBtn.addEventListener('click', function() {
-                // Récupérer toutes les quantités actuelles
-                const inputs = document.querySelectorAll('.quantity-input');
-                let hasChanges = false;
-
-                inputs.forEach(input => {
-                    const itemId = input.getAttribute('data-item-id');
-                    const newValue = parseInt(input.value, 10) || 1;
-
-                    // Mettre à jour via AJAX
-                    updateQuantity(itemId, newValue);
-                    hasChanges = true;
-                });
-
-                if (!hasChanges) {
-                    showNotification('Aucun changement à enregistrer', 'success');
-                }
-            });
-        }
-
-        // Mise à jour lors du changement de quantité via input
         document.querySelectorAll('.quantity-input').forEach(input => {
-            input.addEventListener('change', function() {
+            input.addEventListener('change', function () {
                 const itemId = this.getAttribute('data-item-id');
                 const newValue = parseInt(this.value, 10) || 1;
-
-                // Mettre à jour via AJAX
                 updateQuantity(itemId, newValue);
             });
         });
+
+        // Appel initial
+        updatePromoMessage();
     });
 
     function showStripeRedirectMessage() {
