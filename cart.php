@@ -192,7 +192,7 @@ if (isset($_GET['updated'])) {
                     </button>
                     <form method="post" action="create-stripe-link.php">
                         <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
-                            <i class="fas fa-credit-card mr-2"></i> Payer avec Stripe
+                            <i class="fas fa-credit-card mr-2"></i> Payer
                         </button>
                     </form>
                 </div>
