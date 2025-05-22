@@ -210,17 +210,18 @@ if (isset($_GET['updated'])) {
         
             if (!totalCell || !promoDiv) return;
         
-            const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
+            // Nettoyage du texte pour extraire un float proprement (ex: "12,50 CHF" -> 12.50)
+            const totalText = totalCell.textContent.replace(/[^\d,\.]/g, '').replace(',', '.').trim();
             const total = parseFloat(totalText);
         
             if (isNaN(total)) return;
         
             const remise = Math.floor(total / 5);
-            const pourcentageEconomie = Math.round((remise / total) * 100);
+            const totalApresRemise = total - remise;
+            const pourcentageEconomie = total > 0 ? Math.round((remise / total) * 100) : 0;
         
             // ✅ Mise à jour du total final affiché
             if (totalFinalCell) {
-                const totalApresRemise = total - remise;
                 totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
             }
         
@@ -249,7 +250,7 @@ if (isset($_GET['updated'])) {
         
             promoDiv.innerHTML = message;
         }
-
+        
         function updateQuantity(itemId, newQuantity) {
             const formData = new FormData();
             formData.append('action', 'update_quantity');
