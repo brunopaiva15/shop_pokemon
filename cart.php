@@ -71,12 +71,11 @@ if (isset($_GET['updated'])) {
 ?>
 
 <div class="bg-white rounded-lg shadow-lg p-6" id="cart-container">
-    <h1 class="text-3xl font-bold mb-6">Votre panier</h1>
 
     <?php echo $notification; ?>
 
     <?php if (!empty($cartItems)): ?>
-    <div id="dynamic-promo-message" class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6 text-sm">
+        <div id="dynamic-promo-message" class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded mb-6 text-sm">
             <!-- Le message sera injecté ici par JS -->
         </div>
     <?php endif; ?>
@@ -176,11 +175,11 @@ if (isset($_GET['updated'])) {
                             </td>
                             <td></td>
                         </tr>
-		    	<tr>
-			    <td colspan="6" class="px-4 pt-2 text-right text-xs text-gray-400 italic">
-			        * Hors frais de livraison
-			    </td>
-			</tr>
+                        <tr>
+                            <td colspan="6" class="px-4 pt-2 text-right text-xs text-gray-400 italic">
+                                * Hors frais de livraison
+                            </td>
+                        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -207,61 +206,61 @@ if (isset($_GET['updated'])) {
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         function updatePromoMessage() {
-			const totalCell = document.getElementById('cart-total');
-			const totalFinalCell = document.getElementById('cart-total-final');
-			const remiseCell = document.getElementById('cart-remise');
-			const promoDiv = document.getElementById('dynamic-promo-message');
+            const totalCell = document.getElementById('cart-total');
+            const totalFinalCell = document.getElementById('cart-total-final');
+            const remiseCell = document.getElementById('cart-remise');
+            const promoDiv = document.getElementById('dynamic-promo-message');
 
-			if (!totalCell || !promoDiv) return;
+            if (!totalCell || !promoDiv) return;
 
-			// Récupérer le total brut
-			const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
-			const total = parseFloat(totalText);
+            // Récupérer le total brut
+            const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
+            const total = parseFloat(totalText);
 
-			if (isNaN(total)) return;
+            if (isNaN(total)) return;
 
-			// Calcul de la remise et du total après remise
-			const remise = Math.floor(total / 5);
-			const totalApresRemise = total - remise;
-			const pourcentageEconomie = Math.round((remise / total) * 100);
+            // Calcul de la remise et du total après remise
+            const remise = Math.floor(total / 5);
+            const totalApresRemise = total - remise;
+            const pourcentageEconomie = Math.round((remise / total) * 100);
 
-			// ✅ Mise à jour de la cellule "Total à payer"
-			if (totalFinalCell) {
-				totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
-			}
+            // ✅ Mise à jour de la cellule "Total à payer"
+            if (totalFinalCell) {
+                totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
+            }
 
-			// ✅ Mise à jour de la cellule "Remise"
-			if (remiseCell) {
-				remiseCell.textContent = '- ' + remise.toFixed(2).replace('.', ',') + ' CHF';
-			}
+            // ✅ Mise à jour de la cellule "Remise"
+            if (remiseCell) {
+                remiseCell.textContent = '- ' + remise.toFixed(2).replace('.', ',') + ' CHF';
+            }
 
-			// 💬 Message marketing évolutif
-			let message = '';
-			if (remise >= 8) {
-				message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
+            // 💬 Message marketing évolutif
+            let message = '';
+            if (remise >= 8) {
+                message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
 						   <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
 						   grâce à notre programme de fidélité exclusif ! 💎`;
-			} else if (remise >= 6) {
-				message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
+            } else if (remise >= 6) {
+                message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
 						   <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
 						   sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
-			} else if (remise >= 4) {
-				message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
+            } else if (remise >= 4) {
+                message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
 						   <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
 						   avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
-			} else if (remise >= 1) {
-				message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
+            } else if (remise >= 1) {
+                message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
 						   Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
 						   <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
-			} else {
-				message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
+            } else {
+                message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
 						   <em>Plus vous achetez, plus vous économisez</em> 💡`;
-			}
+            }
 
-			promoDiv.innerHTML = message;
-		}
+            promoDiv.innerHTML = message;
+        }
 
         function updateQuantity(itemId, newQuantity) {
             const formData = new FormData();
@@ -273,9 +272,9 @@ if (isset($_GET['updated'])) {
             if (row) row.style.opacity = "0.7";
 
             fetch('update-cart-ajax.php', {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -323,9 +322,9 @@ if (isset($_GET['updated'])) {
             if (row) row.style.opacity = "0.7";
 
             fetch('update-cart-ajax.php', {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -362,9 +361,9 @@ if (isset($_GET['updated'])) {
             if (cartContent) cartContent.style.opacity = "0.7";
 
             fetch('update-cart-ajax.php', {
-                method: 'POST',
-                body: formData
-            })
+                    method: 'POST',
+                    body: formData
+                })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -387,7 +386,6 @@ if (isset($_GET['updated'])) {
             const cartContainer = document.getElementById('cart-container');
             if (cartContainer) {
                 cartContainer.innerHTML = `
-                    <h1 class="text-3xl font-bold mb-6">Votre panier</h1>
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
                         Le panier a été vidé.
                     </div>
@@ -441,7 +439,7 @@ if (isset($_GET['updated'])) {
         }
 
         document.querySelectorAll('.quantity-modifier').forEach(button => {
-            button.addEventListener('click', function () {
+            button.addEventListener('click', function() {
                 const itemId = this.getAttribute('data-item-id');
                 const input = document.querySelector(`input[data-item-id="${itemId}"]`);
                 if (!input) return;
@@ -457,7 +455,7 @@ if (isset($_GET['updated'])) {
         });
 
         document.querySelectorAll('.remove-item').forEach(button => {
-            button.addEventListener('click', function () {
+            button.addEventListener('click', function() {
                 const itemId = this.getAttribute('data-item-id');
                 if (confirm('Êtes-vous sûr de vouloir supprimer cet article du panier?')) {
                     removeItem(itemId);
@@ -467,7 +465,7 @@ if (isset($_GET['updated'])) {
 
         const clearCartBtn = document.getElementById('clear-cart-btn');
         if (clearCartBtn) {
-            clearCartBtn.addEventListener('click', function () {
+            clearCartBtn.addEventListener('click', function() {
                 if (confirm('Êtes-vous sûr de vouloir vider entièrement votre panier?')) {
                     clearCart();
                 }
@@ -475,7 +473,7 @@ if (isset($_GET['updated'])) {
         }
 
         document.querySelectorAll('.quantity-input').forEach(input => {
-            input.addEventListener('change', function () {
+            input.addEventListener('change', function() {
                 const itemId = this.getAttribute('data-item-id');
                 const newValue = parseInt(this.value, 10) || 1;
                 updateQuantity(itemId, newValue);
