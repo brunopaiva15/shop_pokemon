@@ -176,6 +176,11 @@ if (isset($_GET['updated'])) {
                             </td>
                             <td></td>
                         </tr>
+		    	<tr>
+			    <td colspan="6" class="px-4 pt-2 text-right text-xs text-gray-400 italic">
+			        * Hors frais de livraison
+			    </td>
+			</tr>
                     </tfoot>
                 </table>
             </div>
