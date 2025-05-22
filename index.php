@@ -395,6 +395,15 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                     </div>
                 <?php endif; ?>
 
+                <?php
+                $variantLogo = getVariantLogo($card['variant']);
+                if ($variantLogo):
+                ?>
+                    <img src="<?php echo $variantLogo; ?>"
+                        alt="Logo variante"
+                        class="absolute top-2 right-2 w-9 h-9 drop-shadow" style="z-index:10;">
+                <?php endif; ?>
+
                 <a href="card-details.php?id=<?php echo $card['id']; ?>">
                     <img src="<?php echo $card['image_url'] ?: 'assets/images/card-placeholder.png'; ?>"
                         alt="<?php echo htmlspecialchars($card['name']); ?>"

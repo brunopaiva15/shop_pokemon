@@ -48,6 +48,16 @@ require_once 'includes/header.php';
                         Nouveau
                     </div>
                 <?php endif; ?>
+
+                <?php
+                $variantLogo = getVariantLogo($card['variant']);
+                if ($variantLogo):
+                ?>
+                    <img src="<?php echo $variantLogo; ?>"
+                        alt="Logo variante"
+                        class="absolute top-2 right-2 w-10 h-10 drop-shadow" style="z-index:10;">
+                <?php endif; ?>
+
                 <img src="<?php echo $card['image_url'] ?: 'assets/images/card-placeholder.png'; ?>"
                     alt="<?php echo htmlspecialchars($card['name']); ?>"
                     class="max-h-96 object-contain">

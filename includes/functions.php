@@ -875,3 +875,17 @@ function ensureAdminAuthenticated()
         redirectTo(SITE_URL . '/admin/login.php');
     }
 }
+
+function getVariantLogo($variant)
+{
+    $logos = [
+        'normal'         => 'NormalVariant.png',
+        'holo'            => 'HoloVariant.png',
+        'reverse_holo'    => 'ReverseHoloVariant.png',
+        'pokeball_holo'   => 'pokeBallHolo.png',
+        'masterball_holo' => 'masterBallHolo.png',
+        'cosmos_holo'     => 'HoloVariant.png',
+        'special_edition' => 'HoloVariant.png',
+    ];
+    return isset($logos[$variant]) ? 'assets/images/variants/' . $logos[$variant] : null;
+}
