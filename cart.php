@@ -15,6 +15,7 @@ $cartTotal = getCartTotal();
 
 // Calcul de la remise automatique
 $remiseCHF = floor($cartTotal / 5);
+$totalApresRemise = $cartTotal - $remiseCHF;
 
 // Traitement des actions sur le panier (pour les requêtes non-AJAX)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -157,9 +158,21 @@ if (isset($_GET['updated'])) {
                     </tbody>
                     <tfoot>
                         <tr class="border-t-2 border-gray-300">
-                            <td colspan="4" class="px-4 py-4 text-right font-bold">Total:</td>
-                            <td class="px-4 py-4 text-right font-bold text-xl text-red-600" id="cart-total">
+                            <td colspan="4" class="px-4 py-4 text-right font-semibold text-gray-600">Total (avant réduction) :</td>
+                            <td class="px-4 py-4 text-right font-semibold text-gray-600" id="cart-total">
                                 <?php echo formatPrice($cartTotal); ?>
+                            </td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="px-4 py-2 text-right text-green-700">Remise :</td>
+                            <td class="px-4 py-2 text-right text-green-700">- <?php echo formatPrice($remiseCHF); ?></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="px-4 py-2 text-right font-bold">Total à payer :</td>
+                            <td class="px-4 py-2 text-right font-bold text-xl text-red-600" id="cart-total-final">
+                                <?php echo formatPrice($totalApresRemise); ?>
                             </td>
                             <td></td>
                         </tr>
@@ -193,18 +206,26 @@ if (isset($_GET['updated'])) {
         function updatePromoMessage() {
             const totalCell = document.getElementById('cart-total');
             const promoDiv = document.getElementById('dynamic-promo-message');
+            const totalFinalCell = document.getElementById('cart-total-final');
+        
             if (!totalCell || !promoDiv) return;
-            
+        
             const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
             const total = parseFloat(totalText);
+        
             if (isNaN(total)) return;
-            
+        
             const remise = Math.floor(total / 5);
             const pourcentageEconomie = Math.round((remise / total) * 100);
-            
-            // Messages variés selon le montant de la remise
+        
+            // ✅ Mise à jour du total final affiché
+            if (totalFinalCell) {
+                const totalApresRemise = total - remise;
+                totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
+            }
+        
+            // 💬 Message marketing évolutif
             let message = '';
-            
             if (remise >= 8) {
                 message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
                            <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
@@ -217,7 +238,7 @@ if (isset($_GET['updated'])) {
                 message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
                            <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
                            avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
-            } else if (remise >= 1) {
+            } else if (remise > 2) {
                 message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
                            Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
                            <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
@@ -225,11 +246,8 @@ if (isset($_GET['updated'])) {
                 message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
                            <em>Plus vous achetez, plus vous économisez</em> 💡`;
             }
-            
+        
             promoDiv.innerHTML = message;
-            
-            // Ajouter une animation pour attirer l'attention
-            promoDiv.style.animation = 'pulse 2s ease-in-out';
         }
 
         function updateQuantity(itemId, newQuantity) {
