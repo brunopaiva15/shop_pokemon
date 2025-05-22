@@ -214,7 +214,7 @@ if (isset($_GET['updated'])) {
         if (stripeForm && payBtn && payBtnText) {
             stripeForm.addEventListener('submit', function() {
                 payBtn.disabled = true;
-                payBtnText.textContent = "En attente…";
+                payBtnText.textContent = "En attente de Stripe…";
             });
         }
 

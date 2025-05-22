@@ -616,8 +616,6 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 mobileFilterToggle.innerHTML = isHidden ?
                     '<i class="fas fa-times mr-2"></i> Masquer les filtres' :
                     '<i class="fas fa-filter mr-2"></i> Afficher les filtres';
-                // (optionnel) Empêche de scroller la page quand filtres ouverts
-                document.body.style.overflow = isHidden ? 'hidden' : '';
             });
         }
     });
