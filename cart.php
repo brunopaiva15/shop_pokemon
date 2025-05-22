@@ -107,12 +107,11 @@ if (isset($_GET['updated'])) {
                                         <div>
                                             <h3 class="font-bold">
                                                 <a href="card-details.php?id=<?php echo $item['id']; ?>" class="hover:text-red-600 transition">
-                                                    <?php echo htmlspecialchars($item['name']); ?>
+                                                    <?php echo htmlspecialchars($item['name']); ?> <?php echo htmlspecialchars($item['card_number']); ?>
                                                 </a>
                                             </h3>
                                             <div class="text-sm text-gray-500">
-                                                Série: <?php echo htmlspecialchars($item['series_name']); ?><br>
-                                                N°: <?php echo htmlspecialchars($item['card_number']); ?>
+                                                <?php echo htmlspecialchars($item['series_name']); ?><br>
                                             </div>
                                         </div>
                                     </div>
