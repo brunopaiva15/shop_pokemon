@@ -193,16 +193,43 @@ if (isset($_GET['updated'])) {
         function updatePromoMessage() {
             const totalCell = document.getElementById('cart-total');
             const promoDiv = document.getElementById('dynamic-promo-message');
-
             if (!totalCell || !promoDiv) return;
-
+            
             const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
             const total = parseFloat(totalText);
-
             if (isNaN(total)) return;
-
+            
             const remise = Math.floor(total / 5);
-            promoDiv.innerHTML = `💸 <strong>${remise} CHF</strong> de remise automatique sur cette commande grâce à notre offre : <em>1 CHF offert tous les 5 CHF d'achat</em> !`;
+            const pourcentageEconomie = Math.round((remise / total) * 100);
+            
+            // Messages variés selon le montant de la remise
+            let message = '';
+            
+            if (remise >= 50) {
+                message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
+                           <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
+                           grâce à notre programme de fidélité exclusif ! 💎`;
+            } else if (remise >= 20) {
+                message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
+                           <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
+                           sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
+            } else if (remise >= 10) {
+                message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
+                           <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
+                           avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
+            } else if (remise > 0) {
+                message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
+                           Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
+                           <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
+            } else {
+                message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
+                           <em>Plus vous achetez, plus vous économisez</em> 💡`;
+            }
+            
+            promoDiv.innerHTML = message;
+            
+            // Ajouter une animation pour attirer l'attention
+            promoDiv.style.animation = 'pulse 2s ease-in-out';
         }
 
         function updateQuantity(itemId, newQuantity) {
