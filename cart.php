@@ -204,59 +204,59 @@ if (isset($_GET['updated'])) {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         function updatePromoMessage() {
-			const totalCell = document.getElementById('cart-total');
-			const totalFinalCell = document.getElementById('cart-total-final');
-			const remiseCell = document.getElementById('cart-remise');
-			const promoDiv = document.getElementById('dynamic-promo-message');
-
-			if (!totalCell || !promoDiv) return;
-
-			// Récupérer le total brut
-			const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
-			const total = parseFloat(totalText);
-
-			if (isNaN(total)) return;
-
-			// Calcul de la remise et du total après remise
-			const remise = Math.floor(total / 5);
-			const totalApresRemise = total - remise;
-			const pourcentageEconomie = Math.round((remise / total) * 100);
-
-			// ✅ Mise à jour de la cellule "Total à payer"
-			if (totalFinalCell) {
-				totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
-			}
-
-			// ✅ Mise à jour de la cellule "Remise"
-			if (remiseCell) {
-				remiseCell.textContent = '- ' + remise.toFixed(2).replace('.', ',') + ' CHF';
-			}
-
-			// 💬 Message marketing évolutif
-			let message = '';
-			if (remise >= 8) {
-				message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
-						   <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
-						   grâce à notre programme de fidélité exclusif ! 💎`;
-			} else if (remise >= 6) {
-				message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
-						   <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
-						   sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
-			} else if (remise >= 4) {
-				message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
-						   <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
-						   avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
-			} else if (remise >= 1) {
-				message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
-						   Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
-						   <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
-			} else {
-				message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
-						   <em>Plus vous achetez, plus vous économisez</em> 💡`;
-			}
-
-			promoDiv.innerHTML = message;
-		}
+	    const totalCell = document.getElementById('cart-total');
+	    const totalFinalCell = document.getElementById('cart-total-final');
+	    const remiseCell = document.getElementById('cart-remise');
+	    const promoDiv = document.getElementById('dynamic-promo-message');
+	
+	    if (!totalCell || !promoDiv) return;
+	
+	    // Récupérer le total brut
+	    const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
+	    const total = parseFloat(totalText);
+	
+	    if (isNaN(total)) return;
+	
+	    // Calcul de la remise et du total après remise
+	    const remise = Math.floor(total / 5);
+	    const totalApresRemise = total - remise;
+	    const pourcentageEconomie = Math.round((remise / total) * 100);
+	
+	    // ✅ Mise à jour de la cellule "Total à payer"
+	    if (totalFinalCell) {
+		totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
+	    }
+	
+	    // ✅ Mise à jour de la cellule "Remise"
+	    if (remiseCell) {
+		remiseCell.textContent = '- ' + remise.toFixed(2).replace('.', ',') + ' CHF';
+	    }
+	
+	    // 💬 Message marketing évolutif
+	    let message = '';
+	    if (remise >= 8) {
+		message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
+			   <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
+			   grâce à notre programme de fidélité exclusif ! 💎`;
+	    } else if (remise >= 6) {
+		message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
+			   <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
+			   sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
+	    } else if (remise >= 4) {
+		message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
+			   <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
+			   avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
+	    } else if (remise >= 1) {
+		message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
+			   Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
+			   <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
+	    } else {
+		message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
+			   <em>Plus vous achetez, plus vous économisez</em> 💡`;
+	    }
+	
+	    promoDiv.innerHTML = message;
+	}
 
         function updateQuantity(itemId, newQuantity) {
             const formData = new FormData();
@@ -264,7 +264,7 @@ if (isset($_GET['updated'])) {
             formData.append('item_id', itemId);
             formData.append('quantity', newQuantity);
 
-            const row = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+            const row = document.querySelector(.cart-item[data-item-id="${itemId}"]);
             if (row) row.style.opacity = "0.7";
 
             fetch('update-cart-ajax.php', {
@@ -274,7 +274,7 @@ if (isset($_GET['updated'])) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        const input = document.querySelector(`input[data-item-id="${itemId}"]`);
+                        const input = document.querySelector(input[data-item-id="${itemId}"]);
                         if (input) input.value = data.quantity;
 
                         if (row) {
@@ -314,7 +314,7 @@ if (isset($_GET['updated'])) {
             formData.append('action', 'remove_item');
             formData.append('item_id', itemId);
 
-            const row = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+            const row = document.querySelector(.cart-item[data-item-id="${itemId}"]);
             if (row) row.style.opacity = "0.7";
 
             fetch('update-cart-ajax.php', {
@@ -381,7 +381,7 @@ if (isset($_GET['updated'])) {
         function showEmptyCart() {
             const cartContainer = document.getElementById('cart-container');
             if (cartContainer) {
-                cartContainer.innerHTML = `
+                cartContainer.innerHTML = 
                     <h1 class="text-3xl font-bold mb-6">Votre panier</h1>
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
                         Le panier a été vidé.
@@ -394,7 +394,7 @@ if (isset($_GET['updated'])) {
                             Parcourir les cartes
                         </a>
                     </div>
-                `;
+                ;
             }
         }
 
@@ -415,17 +415,17 @@ if (isset($_GET['updated'])) {
             if (existing) existing.remove();
 
             const notification = document.createElement('div');
-            notification.className = `notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+            notification.className = notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
                 type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            } text-white transition-opacity duration-300`;
-            notification.innerHTML = `
+            } text-white transition-opacity duration-300;
+            notification.innerHTML = 
                 <div class="flex items-center">
                     <i class="fas ${
                         type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
                     } mr-2"></i>
                     <span>${message}</span>
                 </div>
-            `;
+            ;
 
             document.body.appendChild(notification);
 
@@ -438,7 +438,7 @@ if (isset($_GET['updated'])) {
         document.querySelectorAll('.quantity-modifier').forEach(button => {
             button.addEventListener('click', function () {
                 const itemId = this.getAttribute('data-item-id');
-                const input = document.querySelector(`input[data-item-id="${itemId}"]`);
+                const input = document.querySelector(input[data-item-id="${itemId}"]);
                 if (!input) return;
 
                 const currentValue = parseInt(input.value, 10) || 1;
@@ -487,12 +487,12 @@ if (isset($_GET['updated'])) {
 
         const notification = document.createElement('div');
         notification.className = 'notification fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 bg-blue-600 text-white transition-opacity duration-300';
-        notification.innerHTML = `
+        notification.innerHTML = 
             <div class="flex items-center">
                 <i class="fas fa-spinner fa-spin mr-2"></i>
                 <span>Redirection vers Stripe en cours...</span>
             </div>
-        `;
+        ;
         document.body.appendChild(notification);
     }
 </script>
