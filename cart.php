@@ -208,17 +208,15 @@ if (isset($_GET['updated'])) {
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const payBtn = document.getElementById('pay-btn');
-            const payBtnText = document.getElementById('pay-btn-text');
-            const stripeForm = document.getElementById('stripe-form');
-            if (stripeForm && payBtn && payBtnText) {
-                stripeForm.addEventListener('submit', function() {
-                    payBtn.disabled = true;
-                    payBtnText.textContent = "En attente…";
-                });
-            }
-        });
+        const payBtn = document.getElementById('pay-btn');
+        const payBtnText = document.getElementById('pay-btn-text');
+        const stripeForm = document.getElementById('stripe-form');
+        if (stripeForm && payBtn && payBtnText) {
+            stripeForm.addEventListener('submit', function() {
+                payBtn.disabled = true;
+                payBtnText.textContent = "En attente…";
+            });
+        }
 
         function updatePromoMessage() {
             const totalCell = document.getElementById('cart-total');
