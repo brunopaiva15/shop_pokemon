@@ -205,19 +205,19 @@ if (isset($_GET['updated'])) {
             // Messages variés selon le montant de la remise
             let message = '';
             
-            if (remise >= 20) {
+            if (remise >= 8) {
                 message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
                            <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
                            grâce à notre programme de fidélité exclusif ! 💎`;
-            } else if (remise >= 15) {
+            } else if (remise >= 6) {
                 message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
                            <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
                            sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
-            } else if (remise >= 10) {
+            } else if (remise >= 4) {
                 message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
                            <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
                            avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
-            } else if (remise > 0) {
+            } else if (remise > 2) {
                 message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
                            Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
                            <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
