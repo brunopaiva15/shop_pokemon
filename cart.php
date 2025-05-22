@@ -194,9 +194,9 @@ if (isset($_GET['updated'])) {
                     <button type="button" id="clear-cart-btn" class="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition">
                         <i class="fas fa-trash mr-2"></i> Vider le panier
                     </button>
-                    <form method="post" action="create-stripe-link.php">
-                        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
-                            <i class="fas fa-credit-card mr-2"></i> Payer
+                    <form method="post" action="create-stripe-link.php" id="stripe-form">
+                        <button type="submit" id="pay-btn" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
+                            <i class="fas fa-credit-card mr-2"></i> <span id="pay-btn-text">Payer</span>
                         </button>
                     </form>
                 </div>
@@ -207,6 +207,19 @@ if (isset($_GET['updated'])) {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const payBtn = document.getElementById('pay-btn');
+            const payBtnText = document.getElementById('pay-btn-text');
+            const stripeForm = document.getElementById('stripe-form');
+            if (stripeForm && payBtn && payBtnText) {
+                stripeForm.addEventListener('submit', function() {
+                    payBtn.disabled = true;
+                    payBtnText.textContent = "En attente…";
+                });
+            }
+        });
+
         function updatePromoMessage() {
             const totalCell = document.getElementById('cart-total');
             const totalFinalCell = document.getElementById('cart-total-final');
