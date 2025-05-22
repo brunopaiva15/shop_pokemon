@@ -166,7 +166,7 @@ if (isset($_GET['updated'])) {
                         </tr>
                         <tr>
                             <td colspan="4" class="px-4 py-2 text-right text-green-700">Remise :</td>
-                            <td class="px-4 py-2 text-right text-green-700">- <?php echo formatPrice($remiseCHF); ?></td>
+                            <td class="px-4 py-2 text-right text-green-700" id="cart-remise">- <?php echo formatPrice($remiseCHF); ?></td>
                             <td></td>
                         </tr>
                         <tr>
@@ -204,51 +204,59 @@ if (isset($_GET['updated'])) {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         function updatePromoMessage() {
-            const totalCell = document.getElementById('cart-total');
-            const promoDiv = document.getElementById('dynamic-promo-message');
-            const totalFinalCell = document.getElementById('cart-total-final');
-        
-            if (!totalCell || !promoDiv) return;
-        
-            const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
-            const total = parseFloat(totalText);
-        
-            if (isNaN(total)) return;
-        
-            const remise = Math.floor(total / 5);
-            const pourcentageEconomie = Math.round((remise / total) * 100);
-        
-            // ✅ Mise à jour du total final affiché
-            if (totalFinalCell) {
-                const totalApresRemise = total - remise;
-                totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
-            }
-        
-            // 💬 Message marketing évolutif
-            let message = '';
-            if (remise >= 8) {
-                message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
-                           <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
-                           grâce à notre programme de fidélité exclusif ! 💎`;
-            } else if (remise >= 6) {
-                message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
-                           <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
-                           sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
-            } else if (remise >= 4) {
-                message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
-                           <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
-                           avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
-            } else if (remise >= 1) {
-                message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
-                           Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
-                           <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
-            } else {
-                message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
-                           <em>Plus vous achetez, plus vous économisez</em> 💡`;
-            }
-        
-            promoDiv.innerHTML = message;
-        }
+			const totalCell = document.getElementById('cart-total');
+			const totalFinalCell = document.getElementById('cart-total-final');
+			const remiseCell = document.getElementById('cart-remise');
+			const promoDiv = document.getElementById('dynamic-promo-message');
+
+			if (!totalCell || !promoDiv) return;
+
+			// Récupérer le total brut
+			const totalText = totalCell.textContent.replace('CHF', '').replace(',', '.').trim();
+			const total = parseFloat(totalText);
+
+			if (isNaN(total)) return;
+
+			// Calcul de la remise et du total après remise
+			const remise = Math.floor(total / 5);
+			const totalApresRemise = total - remise;
+			const pourcentageEconomie = Math.round((remise / total) * 100);
+
+			// ✅ Mise à jour de la cellule "Total à payer"
+			if (totalFinalCell) {
+				totalFinalCell.textContent = totalApresRemise.toFixed(2).replace('.', ',') + ' CHF';
+			}
+
+			// ✅ Mise à jour de la cellule "Remise"
+			if (remiseCell) {
+				remiseCell.textContent = '- ' + remise.toFixed(2).replace('.', ',') + ' CHF';
+			}
+
+			// 💬 Message marketing évolutif
+			let message = '';
+			if (remise >= 8) {
+				message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
+						   <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
+						   grâce à notre programme de fidélité exclusif ! 💎`;
+			} else if (remise >= 6) {
+				message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
+						   <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
+						   sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
+			} else if (remise >= 4) {
+				message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
+						   <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
+						   avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
+			} else if (remise >= 1) {
+				message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
+						   Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
+						   <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
+			} else {
+				message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
+						   <em>Plus vous achetez, plus vous économisez</em> 💡`;
+			}
+
+			promoDiv.innerHTML = message;
+		}
 
         function updateQuantity(itemId, newQuantity) {
             const formData = new FormData();
