@@ -29,6 +29,14 @@
             </a>
         </div>
 
+        <!-- FAQ -->
+        <div class="flex items-center gap-2">
+            <i class="fas fa-question-circle text-gray-600 text-xl"></i>
+            <a href="<?php echo SITE_URL; ?>/faq.php" class="underline hover:text-gray-900 transition">
+                FAQ
+            </a>
+        </div>
+
     </div>
 </div>
 
@@ -46,6 +54,7 @@
                     <li><a href="<?php echo SITE_URL; ?>" class="text-gray-300 hover:text-white transition">Accueil</a></li>
                     <li><a href="<?php echo SITE_URL; ?>/cart.php" class="text-gray-300 hover:text-white transition">Panier</a></li>
                     <li><a href="https://service.post.ch/ekp-web/ui/list" target="_blank" class="text-gray-300 hover:text-white transition">Suivi de commande</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/faq.php" class="text-gray-300 hover:text-white transition">FAQ</a></li>
                 </ul>
             </div>
 
