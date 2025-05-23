@@ -42,7 +42,7 @@
 
 <footer class="bg-gray-800 text-white py-6">
     <div class="container mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
                 <h3 class="text-xl font-bold mb-4">BDPokéCards</h3>
                 <p class="text-gray-300">Votre boutique spécialisée en cartes Pokémon d’occasion en excellent état, directement sorties du booster et protégées sous sleeve dès l’ouverture.</p>
@@ -55,6 +55,18 @@
                     <li><a href="<?php echo SITE_URL; ?>/cart.php" class="text-gray-300 hover:text-white transition">Panier</a></li>
                     <li><a href="https://service.post.ch/ekp-web/ui/list" target="_blank" class="text-gray-300 hover:text-white transition">Suivi de commande</a></li>
                     <li><a href="<?php echo SITE_URL; ?>/faq.php" class="text-gray-300 hover:text-white transition">FAQ</a></li>
+                </ul>
+            </div>
+
+            <!-- Conditions Générales et Politiques -->
+            <div>
+                <h3 class="text-xl font-bold mb-4">Légal</h3>
+                <ul class="space-y-2">
+                    <li><a href="<?php echo SITE_URL; ?>/terms.php" class="text-gray-300 hover:text-white transition">Conditions générales de vente</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/privacy.php" class="text-gray-300 hover:text-white transition">Politique de confidentialité</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/returns.php" class="text-gray-300 hover:text-white transition">Politique de retour</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/cookies.php" class="text-gray-300 hover:text-white transition">Paiements et frais de livraison</a></li>
+
                 </ul>
             </div>
 
