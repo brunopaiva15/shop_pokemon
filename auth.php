@@ -2,7 +2,7 @@
 session_start();
 require_once 'includes/db.php';
 
-const PASSWORD = '031523';
+const PASSWORD = '200525';
 
 // Authentification
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -37,6 +37,8 @@ $teaserCards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Favicon -->
+    <link rel="icon" href="https://bd-pokecards.ch/assets/images/favicon.ico" type="image/x-icon">
 </head>
 
 <body class="bg-gray-100 text-gray-800 min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
