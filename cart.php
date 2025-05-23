@@ -176,9 +176,11 @@ if (isset($_GET['updated'])) {
                             <td></td>
                         </tr>
                         <tr>
-                            <td colspan="6" class="px-4 pt-2 text-right text-xs text-gray-400 italic">
-                                * Hors frais de livraison
-                            </td>
+                            <?php if ($cartTotal <= 90): ?>
+                                <td colspan="6" class="px-4 pt-2 text-right text-xs text-gray-400 italic">
+                                    * Hors frais de livraison
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     </tfoot>
                 </table>
