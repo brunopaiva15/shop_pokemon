@@ -278,8 +278,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="">-- Sélectionner une langue --</option>
                         <?php foreach (CARD_LANGUAGES as $code => $name): ?>
                             <option value="<?= $code ?>"
-                                <?= (isset($_POST['language']) && $_POST['language'] == $code) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($name) ?>
+                                <?= (isset($_POST['language']) ? $_POST['language'] == $code : $code == 'fr') ? 'selected' : '' ?>></option>
+                            <?= htmlspecialchars($name) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
