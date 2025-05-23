@@ -440,7 +440,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 
                 <div class="text-sm text-gray-500 mb-3">
                     <div>
-                        Série: <span class="inline-flex items-center">
+                        <span class="inline-flex items-center">
                             <?php echo htmlspecialchars($card['series_name']); ?>
                             <?php if (!empty($card['language'])): ?>
                                 <img src="assets/images/<?php echo htmlspecialchars($card['language']); ?>.png"
@@ -450,8 +450,16 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                         </span>
                     </div>
                     <div>N°: <?php echo htmlspecialchars($card['card_number']); ?></div>
-                    <div>Rareté: <?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></div>
-                    <div>Variante: <?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></div>
+                    <span class="inline-flex items-center">
+                        <?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?>
+                        <?php if (!empty($card['rarity'])): ?>
+                            <img src="assets/images/rarities/<?php echo htmlspecialchars($card['rarity']); ?>.webp"
+                                alt="<?php echo htmlspecialchars($card['rarity']); ?>"
+                                class="h-4 ml-2 align-middle inline-block" style="vertical-align:middle;">
+                        <?php endif; ?>
+                    </span>
+
+                    <div><?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></div>
                 </div>
 
                 <?php if (!empty($card['available_conditions'])): ?>

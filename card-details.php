@@ -126,7 +126,17 @@ foreach ($cardConditions as $condition) {
                     </span>
                 </p>
                 <p class="text-gray-600">Numéro: <strong><?php echo htmlspecialchars($card['card_number']); ?></strong></p>
-                <p class="text-gray-600">Rareté: <strong><?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></strong></p>
+                <p class="text-gray-600">
+                    Rareté:
+                    <span class="inline-flex items-center gap-2">
+                        <strong><?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></strong>
+                        <?php if (!empty($card['rarity'])): ?>
+                            <img src="assets/images/rarities/<?php echo htmlspecialchars($card['rarity']); ?>.webp"
+                                alt="<?php echo htmlspecialchars($card['rarity']); ?>"
+                                class="h-4 inline-block" />
+                        <?php endif; ?>
+                    </span>
+                </p>
                 <p class="text-gray-600">Variante: <strong><?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></strong></p>
                 <?php if (!empty($card['description'])): ?>
                     <div class="mt-4">
@@ -277,7 +287,17 @@ foreach ($cardConditions as $condition) {
                         </div>
 
                         <div class="text-sm text-gray-500 mb-3">
-                            <div>Rareté: <?php echo isset(CARD_RARITIES[$relatedCard['rarity']]) ? CARD_RARITIES[$relatedCard['rarity']] : htmlspecialchars($relatedCard['rarity']); ?></div>
+                            <div class="flex items-center gap-2">
+                                <span>Rareté:</span>
+                                <span class="inline-flex items-center gap-1">
+                                    <strong><?php echo isset(CARD_RARITIES[$relatedCard['rarity']]) ? CARD_RARITIES[$relatedCard['rarity']] : htmlspecialchars($relatedCard['rarity']); ?></strong>
+                                    <?php if (!empty($relatedCard['rarity'])): ?>
+                                        <img src="assets/images/rarities/<?php echo htmlspecialchars($relatedCard['rarity']); ?>.webp"
+                                            alt="<?php echo htmlspecialchars($relatedCard['rarity']); ?>"
+                                            class="h-4 inline-block" />
+                                    <?php endif; ?>
+                                </span>
+                            </div>
                             <div>Variante: <?php echo isset(CARD_VARIANTS[$relatedCard['variant']]) ? CARD_VARIANTS[$relatedCard['variant']] : htmlspecialchars($relatedCard['variant']); ?></div>
                             <?php if (isset($relatedCard['best_condition'])): ?>
                                 <div>À partir de: <span class="font-bold text-red-600"><?php echo formatPrice($relatedCard['best_condition']['price']); ?></span></div>
