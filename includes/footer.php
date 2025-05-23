@@ -62,10 +62,10 @@
             <div>
                 <h3 class="text-xl font-bold mb-4">Légal</h3>
                 <ul class="space-y-2">
-                    <li><a href="<?php echo SITE_URL; ?>/terms.php" class="text-gray-300 hover:text-white transition">Conditions générales de vente</a></li>
-                    <li><a href="<?php echo SITE_URL; ?>/privacy.php" class="text-gray-300 hover:text-white transition">Politique de confidentialité</a></li>
-                    <li><a href="<?php echo SITE_URL; ?>/returns.php" class="text-gray-300 hover:text-white transition">Politique de retour</a></li>
-                    <li><a href="<?php echo SITE_URL; ?>/cookies.php" class="text-gray-300 hover:text-white transition">Paiements et frais de livraison</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/terms.php" class="text-gray-300 hover:text-white transition">Conditions Générales de Vente</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/privacy.php" class="text-gray-300 hover:text-white transition">Politique de Confidentialité</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/returns.php" class="text-gray-300 hover:text-white transition">Politique de Retour</a></li>
+                    <li><a href="<?php echo SITE_URL; ?>/shipping.php" class="text-gray-300 hover:text-white transition">Paiements et Livraison</a></li>
 
                 </ul>
             </div>

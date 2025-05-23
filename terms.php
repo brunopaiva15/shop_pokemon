@@ -1,5 +1,5 @@
 <?php
-// cgv.php
+// terms.php
 session_start();
 
 require_once 'includes/functions.php';
@@ -44,7 +44,7 @@ require_once 'includes/header.php';
 
         <div>
             <h2 class="text-2xl font-bold text-gray-900">5. Retour et remboursement</h2>
-            <p>Les retours et remboursements sont traités au cas par cas, uniquement dans des circonstances exceptionnelles. Des règlements spécifiques pourront être communiqués à la demande.</p>
+            <p>Toutes les informations concernant les retours et remboursements sont spécifiées sur la page <a href="retours.php" class="text-blue-600 underline">Politique de retours</a>.
         </div>
 
         <div>

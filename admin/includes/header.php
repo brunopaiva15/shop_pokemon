@@ -28,6 +28,8 @@ if (!isUserLoggedIn() || !isAdmin()) {
     <link rel="stylesheet" href="<?php echo SITE_URL; ?>/assets/css/custom.css">
     <!-- Favicon -->
     <link rel="icon" href="<?php echo SITE_URL; ?>/assets/images/favicon.ico" type="image/x-icon">
+    <!-- Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">

@@ -10,6 +10,25 @@ require_once 'includes/header.php';
 // Récupérer les statistiques
 $conn = getDbConnection();
 
+// Statistiques des ventes par mois
+$stmt = $conn->query("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, SUM(total_amount) as total 
+                      FROM orders 
+                      WHERE status != 'cancelled' 
+                      GROUP BY month 
+                      ORDER BY month DESC 
+                      LIMIT 6");
+$salesByMonth = array_reverse($stmt->fetchAll(PDO::FETCH_ASSOC));
+
+// Carte les plus chères en stock
+$stmt = $conn->query("SELECT c.*, s.name as series_name, cc.price, cc.condition_code, cc.quantity
+                      FROM cards c 
+                      JOIN card_conditions cc ON c.id = cc.card_id 
+                      LEFT JOIN series s ON c.series_id = s.id 
+                      WHERE cc.quantity > 0 
+                      ORDER BY cc.price DESC 
+                      LIMIT 3");
+$topExpensiveCards = $stmt->fetchAll();
+
 // Nombre total de cartes
 $stmt = $conn->query("SELECT COUNT(*) as total FROM cards");
 $totalCards = $stmt->fetch()['total'];
@@ -173,6 +192,37 @@ $lowStockCards = $stmt->fetchAll();
         </div>
     </div>
 </div>
+
+<?php if (!empty($topExpensiveCards)): ?>
+    <div class="bg-white rounded-lg shadow-md p-6 mt-8 mb-8">
+        <h2 class="text-xl font-bold mb-4">Top 3 des cartes les plus chères en stock</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <?php foreach ($topExpensiveCards as $index => $card): ?>
+                <div class="relative bg-gray-50 border rounded-lg p-4 flex items-start shadow-sm">
+                    <div class="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full shadow">
+                        TOP <?php echo $index + 1; ?>
+                    </div>
+                    <div class="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-md overflow-hidden mr-4">
+                        <img src="<?php echo $card['image_url'] ?: '../assets/images/card-placeholder.png'; ?>"
+                            alt="<?php echo htmlspecialchars($card['name']); ?>"
+                            class="w-full h-full object-contain">
+                    </div>
+                    <div class="flex-grow">
+                        <h3 class="text-base font-semibold"><?php echo htmlspecialchars($card['name']); ?></h3>
+                        <p class="text-sm text-gray-600">
+                            <?php echo htmlspecialchars($card['series_name']); ?> – État : <?php echo CARD_CONDITIONS[$card['condition_code']]; ?>
+                        </p>
+                        <p class="text-lg font-bold text-yellow-600 mt-1"><?php echo formatPrice($card['price']); ?></p>
+                        <p class="text-sm text-gray-500">Stock : <?php echo $card['quantity']; ?></p>
+                    </div>
+                    <a href="edit-card.php?id=<?php echo $card['id']; ?>" class="ml-4 text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <!-- Dernières commandes -->
@@ -358,6 +408,28 @@ $lowStockCards = $stmt->fetchAll();
     </div>
 </div>
 
+<div class="bg-white rounded-lg shadow-md p-6 mt-8">
+    <h2 class="text-xl font-bold mb-4">Évolution des ventes (6 mois)</h2>
+    <canvas id="salesChart" height="100"></canvas>
+</div>
+
+<script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: <?php echo json_encode(array_column($salesByMonth, 'month')); ?>,
+            datasets: [{
+                label: 'CHF',
+                data: <?php echo json_encode(array_map(fn($row) => round($row['total'], 2), $salesByMonth)); ?>,
+                fill: true,
+                borderColor: 'rgb(34, 197, 94)',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                tension: 0.3
+            }]
+        }
+    });
+</script>
 <?php
 // Inclure le pied de page
 require_once 'includes/footer.php';
