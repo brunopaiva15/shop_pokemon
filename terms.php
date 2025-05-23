@@ -49,7 +49,7 @@ require_once 'includes/header.php';
 
         <div>
             <h2 class="text-2xl font-bold text-gray-900">6. Garantie</h2>
-            <p>Toutes les cartes sont vérifiées et protégées (sleeve et toploader si > 2.00 CHF). Le Client est invité à signaler tout problème dans un délai de 7 jours après réception.</p>
+            <p>Toutes les cartes sont vérifiées et protégées. Le Client est invité à signaler tout problème dans un délai de 7 jours après réception.</p>
         </div>
 
         <div>

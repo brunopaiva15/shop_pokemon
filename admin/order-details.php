@@ -64,6 +64,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
         $error = 'Statut non valide';
     }
 }
+
+$shippingLabels = [
+    'shr_1RRsuZHcJqWU7jDw4iXkhE3X' => '🎁 Livraison gratuite',
+    'shr_1RRDAJHcJqWU7jDwqMuJgj97' => '✉️ Lettre standard',
+    'shr_1RRxaXHcJqWU7jDw3RMoUtvP' => '✉️ Lettre suivie',
+    'shr_1RRxomHcJqWU7jDwI3b0htRj' => '📦 Colis PostPac Economy'
+];
+$shippingRateId = $order['shipping_rate_id'] ?? null;
+$shippingLabel = $shippingLabels[$shippingRateId] ?? 'Méthode inconnue';
+?>
 ?>
 
 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -115,6 +125,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
                 <div class="flex justify-between">
                     <span class="text-gray-600">Montant total:</span>
                     <span class="font-bold"><?php echo formatPrice($order['total_amount']); ?></span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Livraison :</span>
+                    <span class="font-medium"><?= htmlspecialchars($shippingLabel) ?></span>
                 </div>
 
                 <?php if (!empty($order['stripe_payment_intent'])): ?>
