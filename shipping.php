@@ -4,11 +4,6 @@ session_start();
 
 require_once 'includes/functions.php';
 
-if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
-    header('Location: auth.php');
-    exit;
-}
-
 $pageTitle = 'Paiements et Livraison';
 require_once 'includes/header.php';
 ?>
