@@ -251,26 +251,39 @@ if (isset($_GET['updated'])) {
             let message = '';
             if (remise >= 8) {
                 message = `🔥 <strong>ÉNORME ! ${remise} CHF d'économies instantanées</strong> sur votre commande ! 
-						   <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
-						   grâce à notre programme de fidélité exclusif ! 💎`;
+                   <span style="color: #e74c3c; font-weight: bold;">Vous économisez ${pourcentageEconomie}%</span> 
+                   grâce à notre programme de fidélité exclusif ! 💎`;
             } else if (remise >= 6) {
                 message = `🎉 <strong>BRAVO ! ${remise} CHF offerts automatiquement</strong> 
-						   <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
-						   sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
+                   <span style="color: #27ae60; font-weight: bold;">- ${pourcentageEconomie}% d'économies</span> 
+                   sur cette commande ! Notre cadeau pour votre fidélité 🎁`;
             } else if (remise >= 4) {
                 message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
-						   <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
-						   avec notre offre fidélité : <em>1 CHF gratuit tous les 10 CHF</em> 🚀`;
+                   <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
+                   avec notre offre fidélité : <em>1 CHF gratuit tous les 10 CHF</em> 🚀`;
             } else if (remise >= 1) {
                 message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
-						   Profitez de notre programme : <em>1 CHF gratuit tous les 10 CHF d'achat</em> 
-						   <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
+                   Profitez de notre programme : <em>1 CHF gratuit tous les 10 CHF d'achat</em> 
+                   <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
             } else {
                 message = `🎯 <strong>Astuce :</strong> À partir de 10 CHF d'achat, bénéficiez de 1 CHF offert ! 
-						   <em>Plus vous achetez, plus vous économisez</em> 💡`;
+                   <em>Plus vous achetez, plus vous économisez</em> 💡`;
             }
 
-            promoDiv.innerHTML = message;
+            // 🚚 Livraison gratuite à partir de 90 CHF
+            let livraisonMessage = '';
+            if (total >= 90) {
+                livraisonMessage = `<div class="mt-2 text-green-800 font-semibold">
+            ✅ Livraison offerte ! 🎁 Vous dépassez les 90 CHF d'achat.
+        </div>`;
+            } else {
+                const manque = (90 - total).toFixed(2).replace('.', ',');
+                livraisonMessage = `<div class="mt-2 text-yellow-800 font-medium">
+            🚚 Plus que <strong>${manque} CHF</strong> pour obtenir la livraison <strong>gratuite</strong> !
+        </div>`;
+            }
+
+            promoDiv.innerHTML = message + livraisonMessage;
         }
 
         function updateQuantity(itemId, newQuantity) {
