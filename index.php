@@ -191,8 +191,8 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 
     <!-- Bandeau de protection garantie -->
     <div class="flex items-start gap-3 text-sm text-blue-800 bg-blue-50 border border-blue-200 rounded-md p-3 mb-6">
-        <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white shadow-sm">
-            <i class="fas fa-shield-alt text-sm"></i>
+        <div class="flex-shrink-0 flex items-center justify-center min-w-[2.5rem] min-h-[2.5rem] rounded-full bg-blue-500 text-white shadow-sm">
+            <i class="fas fa-shield-alt text-base"></i>
         </div>
         <div>
             <div class="font-semibold text-sm text-gray-800 mb-0.5">Protection garantie</div>
