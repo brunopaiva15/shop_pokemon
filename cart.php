@@ -14,7 +14,7 @@ $cartItems = getCartItems();
 $cartTotal = getCartTotal();
 
 // Calcul de la remise automatique
-$remiseCHF = floor($cartTotal / 5);
+$remiseCHF = floor($cartTotal / 10);
 $totalApresRemise = $cartTotal - $remiseCHF;
 
 // Traitement des actions sur le panier (pour les requêtes non-AJAX)
@@ -233,7 +233,7 @@ if (isset($_GET['updated'])) {
             if (isNaN(total)) return;
 
             // Calcul de la remise et du total après remise
-            const remise = Math.floor(total / 5);
+            const remise = Math.floor(total / 10);
             const totalApresRemise = total - remise;
             const pourcentageEconomie = Math.round((remise / total) * 100);
 
@@ -260,13 +260,13 @@ if (isset($_GET['updated'])) {
             } else if (remise >= 4) {
                 message = `⚡ <strong>${remise} CHF de réduction appliquée !</strong> 
 						   <span style="color: #f39c12; font-weight: bold;">Économisez ${pourcentageEconomie}%</span> 
-						   avec notre offre fidélité : <em>1 CHF gratuit tous les 5 CHF</em> 🚀`;
+						   avec notre offre fidélité : <em>1 CHF gratuit tous les 10 CHF</em> 🚀`;
             } else if (remise >= 1) {
                 message = `💰 <strong>${remise} CHF offerts sur cette commande !</strong> 
-						   Profitez de notre programme : <em>1 CHF gratuit tous les 5 CHF d'achat</em> 
+						   Profitez de notre programme : <em>1 CHF gratuit tous les 10 CHF d'achat</em> 
 						   <span style="color: #8e44ad;">- Continuez vos achats pour encore plus d'économies !</span> ✨`;
             } else {
-                message = `🎯 <strong>Astuce :</strong> À partir de 5 CHF d'achat, bénéficiez de 1 CHF offert ! 
+                message = `🎯 <strong>Astuce :</strong> À partir de 10 CHF d'achat, bénéficiez de 1 CHF offert ! 
 						   <em>Plus vous achetez, plus vous économisez</em> 💡`;
             }
 
