@@ -20,7 +20,7 @@ $includeFiltersScript = true;
 
 // Pagination
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$perPage = 12;
+$perPage = 20;
 $offset = ($page - 1) * $perPage;
 
 // Filtres (multi)
