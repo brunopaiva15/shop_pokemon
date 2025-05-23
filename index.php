@@ -445,7 +445,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                             <?php if (!empty($card['language'])): ?>
                                 <img src="assets/images/<?php echo htmlspecialchars($card['language']); ?>.png"
                                     alt="<?php echo htmlspecialchars($card['language']); ?>"
-                                    class="h-3 ml-2 align-middle inline-block" style="vertical-align:middle;">
+                                    class="h-4 ml-2 align-middle inline-block" style="vertical-align:middle;">
                             <?php endif; ?>
                         </span>
                     </div>

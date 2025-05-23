@@ -116,12 +116,12 @@ foreach ($cardConditions as $condition) {
             <div class="mb-6">
                 <p class="text-gray-600">
                     Série:
-                    <span class="inline-flex items-center">
+                    <span class="inline-flex items-center gap-2">
                         <strong><?php echo htmlspecialchars($card['series_name']); ?></strong>
                         <?php if (!empty($card['language'])): ?>
                             <img src="assets/images/<?php echo htmlspecialchars($card['language']); ?>.png"
                                 alt="<?php echo htmlspecialchars($card['language']); ?>"
-                                class="h-3 ml-2 align-middle inline-block" style="vertical-align:middle;">
+                                class="h-4 inline-block" />
                         <?php endif; ?>
                     </span>
                 </p>
