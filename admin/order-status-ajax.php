@@ -27,7 +27,7 @@ $orderId = (int)$_POST['order_id'];
 $status = $_POST['status'];
 
 // Valider le statut
-$validStatuses = ['pending', 'processing', 'completed', 'cancelled'];
+$validStatuses = ['pending', 'processing', 'completed', 'cancelled', 'refunded'];
 if (!in_array($status, $validStatuses)) {
     echo json_encode(['success' => false, 'message' => 'Statut non valide']);
     exit;

@@ -328,6 +328,13 @@ function updateCardStock($id, $quantity)
     return $stmt->execute([$quantity, $id]);
 }
 
+function updateCardConditionStock($cardId, $conditionCode, $quantityToAdd)
+{
+    $conn = getDbConnection();
+    $stmt = $conn->prepare("UPDATE card_conditions SET quantity = quantity + ? WHERE card_id = ? AND condition_code = ?");
+    return $stmt->execute([$quantityToAdd, $cardId, $conditionCode]);
+}
+
 function searchCards($term, $seriesId = null)
 {
     $conn = getDbConnection();

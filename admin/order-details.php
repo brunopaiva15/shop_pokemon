@@ -28,14 +28,16 @@ $statusClasses = [
     'pending'    => 'bg-yellow-100 text-yellow-800',
     'processing' => 'bg-blue-100 text-blue-800',
     'completed'  => 'bg-green-100 text-green-800',
-    'cancelled'  => 'bg-red-100 text-red-800'
+    'cancelled'  => 'bg-red-100 text-red-800',
+    'refunded'   => 'bg-gray-100 text-gray-800'
 ];
 
 $statusText = [
     'pending'    => 'En attente',
     'processing' => 'En traitement',
     'completed'  => 'Complétée',
-    'cancelled'  => 'Annulée'
+    'cancelled'  => 'Annulée',
+    'refunded'   => 'Remboursée'
 ];
 
 $success = false;
@@ -50,9 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
             if ($oldStatus !== 'cancelled' && $newStatus === 'cancelled') {
                 $items = getOrderItems($orderId);
                 foreach ($items as $item) {
-                    $card = getCardById($item['card_id']);
-                    $newQty = $card['quantity'] + $item['quantity'];
-                    updateCardStock($item['card_id'], $newQty);
+                    updateCardConditionStock($item['card_id'], $item['condition_code'], $item['quantity']);
                 }
             }
             $success = true;
@@ -77,6 +77,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
     <?php if ($success): ?>
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
             <p>Le statut de la commande a été mis à jour avec succès.</p>
+            <?php if ($oldStatus !== 'cancelled' && $order['status'] === 'cancelled'): ?>
+                <p class="mt-2">Le stock des cartes a également été réajusté.</p>
+                <!-- Afficher les cartes annulées -->
+                <div class="mt-4">
+                    <h4 class="font-semibold">Cartes remises en stock :</h4>
+                    <ul class="list-disc list-inside">
+                        <?php foreach ($orderItems as $item): ?>
+                            <li><?php echo htmlspecialchars($item['name']); ?> (<?php echo htmlspecialchars($item['quantity']); ?>)</li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

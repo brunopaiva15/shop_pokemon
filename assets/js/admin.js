@@ -105,6 +105,9 @@ document.addEventListener("DOMContentLoaded", function () {
               case "processing":
                 row.classList.add("bg-blue-100");
                 break;
+              case "refunded":
+                row.classList.add("bg-gray-100");
+                break;
             }
 
             // Notification
