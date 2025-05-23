@@ -1,10 +1,17 @@
 <?php
 // admin/login.php
+
 session_start();
 require_once '../includes/functions.php';
 
-// Si l'utilisateur est déjà connecté et est admin, rediriger vers le tableau de bord
+// Si l'utilisateur est déjà connecté et admin, rediriger vers le dashboard
 if (isUserLoggedIn() && isAdmin()) {
+    // Vérifie que le 2FA est configuré
+    $user = getUserById($_SESSION['user_id']);
+    if (empty($user['totp_secret'])) {
+        header('Location: setup-2fa.php');
+        exit;
+    }
     header('Location: index.php');
     exit;
 }
@@ -22,14 +29,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = loginUser($username, $password);
 
         if ($user && $user['is_admin']) {
-            // Connexion réussie, initialiser la session
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['is_admin'] = true;
-
-            // Rediriger vers le tableau de bord
-            header('Location: index.php');
-            exit;
+            if (empty($user['totp_secret'])) {
+                // Pas de 2FA : rediriger vers la page de configuration OBLIGATOIRE
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['is_admin'] = true;
+                header('Location: setup-2fa.php');
+                exit;
+            } else {
+                // 2FA activé : demander le code 2FA
+                $_SESSION['2fa_user_id'] = $user['id'];
+                header('Location: 2fa.php');
+                exit;
+            }
         } else {
             $error = 'Identifiants incorrects ou vous n\'avez pas les droits d\'administration';
         }

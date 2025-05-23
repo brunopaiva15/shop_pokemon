@@ -879,7 +879,6 @@ function ensureAdminAuthenticated()
 function getVariantLogo($variant)
 {
     $logos = [
-        'normal'         => 'NormalVariant.png',
         'holo'            => 'HoloVariant.png',
         'reverse_holo'    => 'ReverseHoloVariant.png',
         'pokeball_holo'   => 'pokeBallHolo.png',
@@ -888,4 +887,22 @@ function getVariantLogo($variant)
         'special_edition' => 'HoloVariant.png',
     ];
     return isset($logos[$variant]) ? 'assets/images/variants/' . $logos[$variant] : null;
+}
+
+// Gestion du 2FA
+// Récupère un utilisateur par ID (pour 2FA)
+function getUserById($id)
+{
+    $conn = getDbConnection();
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$id]);
+    return $stmt->fetch();
+}
+
+// Met à jour le secret TOTP d'un utilisateur (pour 2FA)
+function saveUserTOTPSecret($id, $secret)
+{
+    $conn = getDbConnection();
+    $stmt = $conn->prepare("UPDATE users SET totp_secret = ? WHERE id = ?");
+    $stmt->execute([$secret, $id]);
 }
