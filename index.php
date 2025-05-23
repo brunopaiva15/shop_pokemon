@@ -389,7 +389,10 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 <!-- Grille des cartes -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
     <?php foreach ($cards as $card): ?>
-        <div class="card-item bg-white rounded-lg shadow-md overflow-hidden card-hover transition-transform transform hover:scale-105">
+        <?php
+        $isGold = $card['price'] > 50;
+        ?>
+        <div class="card-item bg-white rounded-lg shadow-md overflow-hidden card-hover transition-transform transform hover:scale-105 <?php echo $isGold ? 'gold-border' : ''; ?>">
             <div class="card-image-zoom p-4 bg-gray-100 relative">
                 <?php
                 $createdAt = strtotime($card['created_at']);
