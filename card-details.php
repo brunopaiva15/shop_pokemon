@@ -55,7 +55,7 @@ require_once 'includes/header.php';
                 ?>
                     <img src="<?php echo $variantLogo; ?>"
                         alt="Logo variante"
-                        class="absolute top-2 right-2 w-10 h-10 drop-shadow" style="z-index:10;">
+                        class="absolute top-2 right-2 w-7 h-7 drop-shadow" style="z-index:10;">
                 <?php endif; ?>
 
                 <img src="<?php echo $card['image_url'] ?: 'assets/images/card-placeholder.png'; ?>"

@@ -34,6 +34,7 @@ $priceMax = isset($_GET['price_max']) && is_numeric($_GET['price_max']) ? (float
 
 // Tri
 $sortOptions = [
+    'relevance'   => ['price', 'DESC'],
     'number_asc'  => ['card_number', 'ASC'],
     'number_desc' => ['card_number', 'DESC'],
     'newest'      => ['created_at',   'DESC'],
@@ -43,7 +44,7 @@ $sortOptions = [
     'name_asc'    => ['name',         'ASC'],
     'name_desc'   => ['name',         'DESC']
 ];
-$sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions) ? $_GET['sort'] : 'number_asc';
+$sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions) ? $_GET['sort'] : 'relevance';
 list($sortBy, $sortOrder) = $sortOptions[$sort];
 
 // Header
@@ -53,7 +54,7 @@ require_once 'includes/header.php';
 $allSeries = getSeriesWithCards();
 
 // Requête principale
-function getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $variants, $priceMin, $priceMax, $sortBy, $sortOrder)
+function getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $variants, $priceMin, $priceMax, $sortBy, $sortOrder, $sort)
 {
     $conn = getDbConnection();
     $query = "
@@ -97,22 +98,26 @@ function getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $v
     $query .= " GROUP BY c.id";
 
     // Filtres de prix
-    if ($priceMin !== null) {
+    if ($priceMin !== null && $priceMax !== null) {
+        $query .= " HAVING MIN(cc.price) BETWEEN ? AND ?";
+        $params[] = $priceMin;
+        $params[] = $priceMax;
+    } elseif ($priceMin !== null) {
         $query .= " HAVING MIN(cc.price) >= ?";
         $params[] = $priceMin;
-    }
-
-    if ($priceMax !== null) {
-        $query .= $priceMin !== null
-            ? " AND MIN(cc.price) <= ?"
-            : " HAVING MIN(cc.price) <= ?";
+    } elseif ($priceMax !== null) {
+        $query .= " HAVING MIN(cc.price) <= ?";
         $params[] = $priceMax;
     }
 
-    // Tri
-    $query .= $sortBy === 'price'
-        ? " ORDER BY price $sortOrder"
-        : " ORDER BY c.$sortBy $sortOrder";
+    if ($sortBy === 'price' && $sortOrder === 'DESC' && $sort === 'relevance') {
+        // Afficher d'abord les cartes créées il y a moins de 14 jours, puis trier par prix décroissant et numéro croissant
+        $query .= " ORDER BY (c.created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)) DESC, price DESC, c.card_number ASC";
+    } else {
+        $query .= $sortBy === 'price'
+            ? " ORDER BY price $sortOrder"
+            : " ORDER BY c.$sortBy $sortOrder";
+    }
 
     $stmt = $conn->prepare($query);
     $stmt->execute($params);
@@ -120,7 +125,7 @@ function getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $v
 }
 
 // Récupérer les cartes filtrées
-$allFilteredCards = getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $variants, $priceMin, $priceMax, $sortBy, $sortOrder);
+$allFilteredCards = getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $variants, $priceMin, $priceMax, $sortBy, $sortOrder, $sort);
 
 // Pagination
 $totalCards = count($allFilteredCards);
@@ -353,6 +358,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <div class="flex flex-col w-full sm:w-48">
             <label for="sort-filter" class="text-sm font-medium text-gray-700 mb-1">Trier par</label>
             <select id="sort-filter" name="sort" class="p-2 border border-gray-300 rounded-md w-full">
+                <option value="relevance" <?= $sort == 'relevance' ? 'selected' : ''; ?>>Pertinence</option>
                 <option value="number_asc" <?= $sort == 'number_asc' ? 'selected' : ''; ?>>N° croissant</option>
                 <option value="number_desc" <?= $sort == 'number_desc' ? 'selected' : ''; ?>>N° décroissant</option>
                 <option value="newest" <?= $sort == 'newest' ? 'selected' : ''; ?>>Plus récent</option>
@@ -401,7 +407,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 ?>
                     <img src="<?php echo $variantLogo; ?>"
                         alt="Logo variante"
-                        class="absolute top-2 right-2 w-9 h-9 drop-shadow" style="z-index:10;">
+                        class="absolute top-2 right-2 w-7 h-7 drop-shadow" style="z-index:10;">
                 <?php endif; ?>
 
                 <a href="card-details.php?id=<?php echo $card['id']; ?>">
