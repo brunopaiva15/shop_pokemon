@@ -88,7 +88,7 @@ $teaserCards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <div class="mb-4 text-center">
             <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                <i class="fas fa-lock mr-2 text-xs"></i> Accès réservé
+                <i class="fas fa-lock mr-2 text-xs"></i> Accès réservé aux bêta-testeurs
             </span>
         </div>
 
