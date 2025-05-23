@@ -157,16 +157,35 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
         <h1 class="text-3xl font-extrabold text-gray-700">
             Accueil
         </h1>
-        <div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
-            <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
-                <i class="fas fa-shield-alt mr-1"></i> Cartes 100% officielles
-            </span>
-            <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
-                <i class="fas fa-truck mr-1"></i> Livraison rapide & protégée
-            </span>
-            <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">
-                <i class="fas fa-star mr-1"></i> Nouveautés chaque mois
-            </span>
+        <!-- Badges avec défilement infini uniquement sur mobile -->
+        <div class="relative sm:static overflow-hidden sm:overflow-visible">
+            <div class="flex gap-3 animate-scroll-mobile whitespace-nowrap text-xs mt-3 sm:mt-0 sm:animate-none sm:flex-wrap sm:whitespace-normal w-max">
+                <!-- Contenu affiché partout -->
+                <div class="flex gap-3">
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-800 font-medium rounded-full">
+                        <i class="fas fa-shield-alt text-xs"></i> Cartes 100% officielles
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 font-medium rounded-full">
+                        <i class="fas fa-truck text-xs"></i> Livraison protégée
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 font-medium rounded-full">
+                        <i class="fas fa-star text-xs"></i> Nouveautés chaque mois
+                    </span>
+                </div>
+
+                <!-- Contenu dupliqué uniquement visible sur mobile pour l’animation -->
+                <div class="flex gap-3 sm:hidden">
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-800 font-medium rounded-full">
+                        <i class="fas fa-shield-alt text-xs"></i> Cartes 100% officielles
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 font-medium rounded-full">
+                        <i class="fas fa-truck text-xs"></i> Livraison protégée
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 font-medium rounded-full">
+                        <i class="fas fa-star text-xs"></i> Nouveautés chaque mois
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 

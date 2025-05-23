@@ -133,3 +133,14 @@
     background-color: #9333ea;
     color: white;
 }
+
+@keyframes scroll-left-loop {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@media (max-width: 639px) {
+    .animate-scroll-mobile {
+        animation: scroll-left-loop 15s linear infinite;
+    }
+}

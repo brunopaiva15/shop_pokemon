@@ -39,7 +39,7 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
                         <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="BDPokéCards" class="h-12 mr-2 md:h-14 md:mr-3">
                         <div class="flex flex-col leading-tight">
                             <span class="text-xl md:text-2xl font-bold">BDPokéCards</span>
-                            <span class="text-sm md:text-base text-gray-400 font-medium italic mt-0.5 ml-2">
+                            <span class="text-sm md:text-base text-gray-400 font-medium italic mt-0.5">
                                 Votre boutique de cartes Pokémon
                             </span>
                         </div>
