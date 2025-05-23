@@ -439,7 +439,9 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                             <?php foreach ($card['available_conditions'] as $condition): ?>
                                 <div class="text-xs condition-badge condition-<?php echo $condition['condition_code']; ?>">
                                     <?php echo CARD_CONDITIONS[$condition['condition_code']]; ?>
-                                    <span class="font-semibold"><?php echo formatPrice($condition['price']); ?></span>
+                                    <?php if (count($card['available_conditions']) > 1): ?>
+                                        <span class="font-semibold"><?php echo formatPrice($condition['price']); ?></span>
+                                    <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
