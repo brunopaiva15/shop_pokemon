@@ -35,9 +35,14 @@ require_once __DIR__ . '/functions.php'; // Utilisation d'un chemin absolu
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                 <!-- Première ligne: Logo et panier -->
                 <div class="flex justify-between items-center mb-2 md:mb-0 md:w-auto">
-                    <a href="<?php echo SITE_URL; ?>" class="flex items-center">
+                    <a href="<?php echo SITE_URL; ?>" class="flex items-start md:items-center">
                         <img src="<?php echo SITE_URL; ?>/assets/images/logo.png" alt="BDPokéCards" class="h-12 mr-2 md:h-14 md:mr-3">
-                        <span class="text-xl md:text-2xl font-bold">BDPokéCards</span>
+                        <div class="flex flex-col leading-tight">
+                            <span class="text-xl md:text-2xl font-bold">BDPokéCards</span>
+                            <span class="text-sm md:text-base text-gray-400 font-medium italic mt-0.5 ml-2">
+                                Votre boutique de cartes Pokémon
+                            </span>
+                        </div>
                     </a>
 
                     <!-- Panier visible uniquement sur mobile -->

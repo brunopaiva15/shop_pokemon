@@ -171,22 +171,15 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
     </div>
 
     <!-- Bandeau de protection garantie -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-500 p-4">
-        <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white shadow-sm">
-                <i class="fas fa-shield-alt"></i>
-            </div>
-            <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="font-semibold text-gray-800 text-base">Protection garantie</span>
-                    <span class="inline-flex items-center px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                        Inclus
-                    </span>
-                </div>
-                <span class="text-gray-600 text-sm">
-                    Toutes les cartes sont livrées dans une <span class="font-semibold">sleeve</span> de protection.
-                    <span class="font-semibold">Toploader</span> inclus pour les cartes de plus de 2.00&nbsp;CHF.
-                </span>
+    <div class="flex items-start gap-3 text-sm text-blue-800 bg-blue-50 border border-blue-200 rounded-md p-3 mb-6">
+        <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white shadow-sm">
+            <i class="fas fa-shield-alt text-sm"></i>
+        </div>
+        <div>
+            <div class="font-semibold text-sm text-gray-800 mb-0.5">Protection garantie</div>
+            <div>
+                Cartes livrées sous <span class="font-medium">sleeve</span> de protection.
+                <span class="font-medium">Toploader</span> offert pour les cartes dès 2.00&nbsp;CHF.
             </div>
         </div>
     </div>
