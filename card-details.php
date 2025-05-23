@@ -52,18 +52,6 @@ foreach ($cardConditions as $condition) {
 }
 ?>
 
-<?php if ($hasCollectorPrice): ?>
-    <div class="max-w-5xl mx-auto mt-6 mb-8">
-        <div class="bg-white/60 backdrop-blur-sm border border-yellow-400 rounded-xl shadow-lg p-6 flex items-center space-x-4">
-            <div class="text-3xl">🌟</div>
-            <div>
-                <h2 class="text-xl font-bold text-yellow-800 mb-1">Pièce de collection</h2>
-                <p class="text-gray-700">Cette carte est une pièce de collection dont nous sommes vraiment fiers.</p>
-            </div>
-        </div>
-    </div>
-<?php endif; ?>
-
 <?php if ($hasUltraCollectorPrice): ?>
     <div class="max-w-5xl mx-auto mt-6 mb-8">
         <div class="bg-white/60 backdrop-blur-sm border border-red-400 rounded-xl shadow-lg p-6 flex items-center space-x-4">
@@ -71,6 +59,16 @@ foreach ($cardConditions as $condition) {
             <div>
                 <h2 class="text-xl font-bold text-red-800 mb-1">Pièce de collection <strong>ULTRA RARE</strong></h2>
                 <p class="text-gray-700">Cette carte est une pièce de collection <strong>ULTRA RARE</strong> dont nous sommes extrêmement fiers. Nous éspérons que vous l'apprécierez autant que nous !</p>
+            </div>
+        </div>
+    </div>
+<?php elseif ($hasCollectorPrice): ?>
+    <div class="max-w-5xl mx-auto mt-6 mb-8">
+        <div class="bg-white/60 backdrop-blur-sm border border-yellow-400 rounded-xl shadow-lg p-6 flex items-center space-x-4">
+            <div class="text-3xl">🌟</div>
+            <div>
+                <h2 class="text-xl font-bold text-yellow-800 mb-1">Pièce de collection</h2>
+                <p class="text-gray-700">Cette carte est une pièce de collection dont nous sommes vraiment fiers.</p>
             </div>
         </div>
     </div>
