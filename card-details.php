@@ -30,9 +30,31 @@ $ip = $_SERVER['REMOTE_ADDR'];
 $now = date('Y-m-d H:i:s');
 
 // Titre de la page
-$pageTitle = htmlspecialchars($card['name']);
+$pageTitle = 'Détails de la carte';
 require_once 'includes/header.php';
 ?>
+
+<?php
+$hasCollectorPrice = false;
+foreach ($cardConditions as $condition) {
+    if ($condition['price'] > 50) {
+        $hasCollectorPrice = true;
+        break;
+    }
+}
+?>
+
+<?php if ($hasCollectorPrice): ?>
+    <div class="max-w-5xl mx-auto mt-6 mb-8">
+        <div class="bg-white/60 backdrop-blur-sm border border-yellow-400 rounded-xl shadow-lg p-6 flex items-center space-x-4">
+            <div class="text-3xl">🌟</div>
+            <div>
+                <h2 class="text-xl font-bold text-yellow-800 mb-1">Pièce de collection</h2>
+                <p class="text-gray-700">Cette carte est une pièce de collection dont nous sommes vraiment fiers.</p>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <div class="bg-white rounded-lg shadow-lg p-6">
     <div class="flex flex-col md:flex-row">
@@ -66,6 +88,7 @@ require_once 'includes/header.php';
 
         <!-- Détails -->
         <div class="md:w-1/2">
+
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h1 class="text-3xl font-bold"><?php echo htmlspecialchars($card['name']); ?></h1>

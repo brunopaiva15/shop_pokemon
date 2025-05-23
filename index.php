@@ -154,7 +154,7 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 <!-- Titre de la page et bandeau d'information -->
 <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
-        <h1 class="text-3xl font-extrabold text-gray-700 drop-shadow-lg tracking-tight">
+        <h1 class="text-3xl font-extrabold text-gray-700">
             Accueil
         </h1>
         <div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
