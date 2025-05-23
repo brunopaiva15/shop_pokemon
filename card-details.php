@@ -114,7 +114,17 @@ foreach ($cardConditions as $condition) {
             </div>
 
             <div class="mb-6">
-                <p class="text-gray-600">Série: <strong><?php echo htmlspecialchars($card['series_name']); ?></strong></p>
+                <p class="text-gray-600">
+                    Série:
+                    <span class="inline-flex items-center">
+                        <strong><?php echo htmlspecialchars($card['series_name']); ?></strong>
+                        <?php if (!empty($card['language'])): ?>
+                            <img src="assets/images/<?php echo htmlspecialchars($card['language']); ?>.png"
+                                alt="<?php echo htmlspecialchars($card['language']); ?>"
+                                class="h-3 ml-2 align-middle inline-block" style="vertical-align:middle;">
+                        <?php endif; ?>
+                    </span>
+                </p>
                 <p class="text-gray-600">Numéro: <strong><?php echo htmlspecialchars($card['card_number']); ?></strong></p>
                 <p class="text-gray-600">Rareté: <strong><?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></strong></p>
                 <p class="text-gray-600">Variante: <strong><?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></strong></p>

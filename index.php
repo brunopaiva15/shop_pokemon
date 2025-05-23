@@ -439,7 +439,16 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
                 </div>
 
                 <div class="text-sm text-gray-500 mb-3">
-                    <div>Série: <?php echo htmlspecialchars($card['series_name']); ?></div>
+                    <div>
+                        Série: <span class="inline-flex items-center">
+                            <?php echo htmlspecialchars($card['series_name']); ?>
+                            <?php if (!empty($card['language'])): ?>
+                                <img src="assets/images/<?php echo htmlspecialchars($card['language']); ?>.png"
+                                    alt="<?php echo htmlspecialchars($card['language']); ?>"
+                                    class="h-3 ml-2 align-middle inline-block" style="vertical-align:middle;">
+                            <?php endif; ?>
+                        </span>
+                    </div>
                     <div>N°: <?php echo htmlspecialchars($card['card_number']); ?></div>
                     <div>Rareté: <?php echo isset(CARD_RARITIES[$card['rarity']]) ? CARD_RARITIES[$card['rarity']] : htmlspecialchars($card['rarity']); ?></div>
                     <div>Variante: <?php echo isset(CARD_VARIANTS[$card['variant']]) ? CARD_VARIANTS[$card['variant']] : htmlspecialchars($card['variant']); ?></div>

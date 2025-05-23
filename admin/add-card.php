@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $rarity      = isset($_POST['rarity'])      ? sanitizeInput($_POST['rarity'])           : '';
     $variant     = isset($_POST['variant'])     ? sanitizeInput($_POST['variant'])          : '';
     $description = isset($_POST['description']) ? sanitizeInput($_POST['description'])      : '';
+    $language    = isset($_POST['language'])    ? sanitizeInput($_POST['language'])         : '';
 
     // Récupérer les états, prix et quantités
     $conditions = isset($_POST['conditions']) ? $_POST['conditions'] : [];
@@ -108,10 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$existingCard) {
                 // Ajouter une nouvelle carte
                 $stmt = $conn->prepare("
-                    INSERT INTO cards (series_id, name, card_number, rarity, variant, description, image_url)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO cards (series_id, name, card_number, rarity, variant, description, image_url, language)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ");
-                $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $variant, $description, $imageUrl]);
+                $stmt->execute([$seriesId, $name, $cardNumber, $rarity, $variant, $description, $imageUrl, $language]);
                 $cardId = $conn->lastInsertId();
 
                 // Ajouter les différents états
@@ -264,6 +265,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php foreach (CARD_VARIANTS as $code => $name): ?>
                             <option value="<?= $code ?>"
                                 <?= (isset($_POST['variant']) && $_POST['variant'] == $code) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="language" class="block text-sm font-medium text-gray-700 mb-1">Langue</label>
+                    <select id="language" name="language" required
+                        class="w-full p-2 border border-gray-300 rounded-md">
+                        <option value="">-- Sélectionner une langue --</option>
+                        <?php foreach (CARD_LANGUAGES as $code => $name): ?>
+                            <option value="<?= $code ?>"
+                                <?= (isset($_POST['language']) && $_POST['language'] == $code) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($name) ?>
                             </option>
                         <?php endforeach; ?>
