@@ -435,7 +435,6 @@ $paginationUrl = '?' . http_build_query($paginationParams) . '&page=';
 
                 <?php if (!empty($card['available_conditions'])): ?>
                     <div class="mb-3">
-                        <p class="text-sm font-medium text-gray-700 mb-1">États disponibles:</p>
                         <div class="flex flex-wrap gap-1">
                             <?php foreach ($card['available_conditions'] as $condition): ?>
                                 <div class="text-xs condition-badge condition-<?php echo $condition['condition_code']; ?>">
