@@ -1,8 +1,7 @@
 <?php
-// Afficher les erreurs PHP
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Cacher les erreurs pour la production
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 
 // admin/includes/header.php
 session_start();
