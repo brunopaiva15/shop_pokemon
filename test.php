@@ -57,12 +57,12 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <!-- Boutons en-dehors -->
 <div class="flex gap-4 flex-wrap justify-center">
-    <button onclick="randomizeCards()" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded">Disposition aléatoire</button>
+    <button onclick="shuffleCards()" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded">Disposition aléatoire</button>
     <button onclick="resetCards()" class="bg-gray-500 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded">Disposition normale</button>
 </div>
 
 <script>
-const presets = [
+const positions = [
     { top: '1rem', left: '1rem', rotate: -10 },
     { top: '0.75rem', left: '50%', transform: 'translateX(-50%)', rotate: 8 },
     { top: '1rem', right: '1rem', rotate: 10 },
@@ -71,27 +71,11 @@ const presets = [
     { bottom: '1rem', right: '1rem', rotate: -12 },
 ];
 
-// Zones non superposées
-const zones = [
-    { top: '10%', left: '10%' },
-    { top: '10%', left: '40%' },
-    { top: '10%', left: '70%' },
-    { top: '70%', left: '10%' },
-    { top: '70%', left: '40%' },
-    { top: '70%', left: '70%' }
-];
-
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-function resetCards() {
+function applyPositions(order) {
     for (let i = 0; i < 6; i++) {
-        const card = document.getElementById(`card${i}`);
+        const card = document.getElementById(`card${order[i]}`);
+        const pos = positions[i];
+
         card.style.top = '';
         card.style.bottom = '';
         card.style.left = '';
@@ -99,33 +83,30 @@ function resetCards() {
         card.style.transform = '';
         card.style.rotate = '';
 
-        const preset = presets[i];
-        Object.keys(preset).forEach(k => {
-            if (k === 'rotate') {
-                card.style.rotate = `${preset[k]}deg`;
+        for (const key in pos) {
+            if (key === 'rotate') {
+                card.style.rotate = `${pos[key]}deg`;
             } else {
-                card.style[k] = preset[k];
+                card.style[key] = pos[key];
             }
-        });
+        }
     }
 }
 
-function randomizeCards() {
-    const shuffledZones = shuffle([...zones]);
-
-    for (let i = 0; i < 6; i++) {
-        const card = document.getElementById(`card${i}`);
-        const zone = shuffledZones[i];
-        card.style.top = zone.top;
-        card.style.left = zone.left;
-        card.style.bottom = '';
-        card.style.right = '';
-        card.style.transform = 'translate(-50%, -50%)';
-        card.style.rotate = `${Math.floor(Math.random() * 30 - 15)}deg`;
-    }
+function resetCards() {
+    applyPositions([0, 1, 2, 3, 4, 5]);
 }
 
-// Disposition initiale
+function shuffleCards() {
+    const order = [0, 1, 2, 3, 4, 5];
+    for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+    }
+    applyPositions(order);
+}
+
+// Initialisation
 resetCards();
 </script>
 
