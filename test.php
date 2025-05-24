@@ -1,7 +1,7 @@
 <?php
 require_once 'includes/db.php';
 $conn = getDbConnection();
-$stmt = $conn->query("SELECT image_url FROM cards WHERE image_url IS NOT NULL ORDER BY price DESC LIMIT 6");
+$stmt = $conn->query("SELECT image_url FROM cards WHERE image_url IS NOT NULL ORDER BY RAND() LIMIT 6");
 $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -17,22 +17,17 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 <div class="w-full max-w-[640px] aspect-square relative bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
 
-    <!-- Cartes Pokémon en fond -->
+    <!-- Cartes Pokémon flottantes -->
     <?php if (count($cards) === 6): ?>
-        <!-- Ligne du haut -->
-        <img src="<?= $cards[0]['image_url'] ?>" class="absolute w-24 rotate-[-15deg] top-2 left-4 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[1]['image_url'] ?>" class="absolute w-24 rotate-[12deg] top-2 right-4 z-0 pointer-events-none select-none">
-
-        <!-- Ligne du centre -->
-        <img src="<?= $cards[2]['image_url'] ?>" class="absolute w-24 rotate-[8deg] top-1/2 left-0 transform -translate-y-1/2 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[3]['image_url'] ?>" class="absolute w-24 rotate-[-10deg] top-1/2 right-0 transform -translate-y-1/2 z-0 pointer-events-none select-none">
-
-        <!-- Ligne du bas -->
-        <img src="<?= $cards[4]['image_url'] ?>" class="absolute w-24 rotate-[5deg] bottom-2 left-6 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[5]['image_url'] ?>" class="absolute w-24 rotate-[-6deg] bottom-2 right-6 z-0 pointer-events-none select-none">
+        <img src="<?= $cards[0]['image_url'] ?>" class="absolute w-20 rotate-[-15deg] top-3 left-4 z-0 pointer-events-none select-none">
+        <img src="<?= $cards[1]['image_url'] ?>" class="absolute w-20 rotate-[12deg] top-5 right-4 z-0 pointer-events-none select-none">
+        <img src="<?= $cards[2]['image_url'] ?>" class="absolute w-20 rotate-[10deg] bottom-5 left-3 z-0 pointer-events-none select-none">
+        <img src="<?= $cards[3]['image_url'] ?>" class="absolute w-20 rotate-[-10deg] bottom-4 right-4 z-0 pointer-events-none select-none">
+        <img src="<?= $cards[4]['image_url'] ?>" class="absolute w-20 rotate-[8deg] top-1/2 left-0 transform -translate-y-1/2 z-0 pointer-events-none select-none">
+        <img src="<?= $cards[5]['image_url'] ?>" class="absolute w-20 rotate-[-8deg] top-1/2 right-0 transform -translate-y-1/2 z-0 pointer-events-none select-none">
     <?php endif; ?>
 
-    <!-- Contenu principal -->
+    <!-- Bloc central -->
     <div class="absolute inset-0 flex items-center justify-center z-10 px-4">
         <div class="bg-white/80 backdrop-blur-md rounded-lg px-6 py-8 text-center shadow-md max-w-sm w-full">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-3">BDPokéCards</h1>
