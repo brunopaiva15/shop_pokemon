@@ -65,6 +65,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
     }
 }
 
+if (isset($_POST['send_email_notification']) && $_POST['send_email_notification'] == 1) {
+    $statusToNotify = $_POST['status_to_notify'];
+
+    $messageTemplates = [
+        'processing' => "Nous sommes en train d’emballer soigneusement votre commande. Elle sera bientôt remise à La Poste !",
+        'completed'  => "Votre commande a été remise à La Poste ! Elle est désormais en route vers vous. 📦",
+        'cancelled'  => "Votre commande a été annulée. Si vous avez des questions, n’hésitez pas à nous contacter.",
+        'refunded'   => "Nous avons procédé au remboursement de votre commande. Celui-ci apparaîtra sous peu sur votre moyen de paiement."
+    ];
+
+    $mailTitles = [
+        'processing' => '🛍 Votre commande est en traitement',
+        'completed'  => '📦 Votre commande a été envoyée',
+        'cancelled'  => '❌ Votre commande a été annulée',
+        'refunded'   => '💸 Votre commande a été remboursée',
+    ];
+
+    if (isset($messageTemplates[$statusToNotify]) && !empty($order['customer_email'])) {
+        require_once '../vendor/autoload.php';
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->CharSet = 'UTF-8';
+            $mail->Encoding = 'base64';
+            $mail->Host = 'bd-pokecards.ch';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'commandes';
+            $mail->Password = 'Musik09x'; // 🔐 à sécuriser
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
+
+            $mail->setFrom('commandes@bd-pokecards.ch', 'BDPokécards');
+            $mail->addAddress($order['customer_email'], $order['customer_name']);
+            $mail->addReplyTo('contact@bd-pokecards.ch', 'BDPokécards');
+
+            $mail->isHTML(true);
+            $mail->Subject = 'Mise à jour de votre commande BD' . $orderId . ' - ' . 'BDPokécards';
+
+            ob_start(); ?>
+            <div style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px;">
+                <table style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+                    <tr style="background-color: #1f2937; color: #fff;">
+                        <td style="padding: 20px; text-align: center;">
+                            <img src="https://bd-pokecards.ch/assets/images/logo.png" alt="BDPokécards" style="max-height: 60px; margin-bottom: 10px;">
+                            <h1 style="margin: 0; font-size: 22px;">
+                                <?= htmlspecialchars($mailTitles[$statusToNotify] ?? 'Mise à jour de votre commande BD' . $orderId) ?>
+                            </h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px;">
+                            <p>Bonjour <?= htmlspecialchars($order['customer_name']) ?>,</p>
+                            <p><?= nl2br(htmlspecialchars($messageTemplates[$statusToNotify])) ?></p>
+                            <p style="margin-top: 30px;">
+                                En cas de souci, n'hésitez pas à nous contacter : <a href="mailto:commandes@bd-pokecards.ch">commandes@bd-pokecards.ch</a>.
+                            </p>
+                        </td>
+                    </tr>
+                    <tr style="background-color: #f3f4f6; text-align: center; font-size: 12px;">
+                        <td style="padding: 15px;">
+                            © <?= date('Y') ?> BDPokécards — Tous droits réservés
+                        </td>
+                    </tr>
+                </table>
+            </div>
+<?php
+            $mail->Body = ob_get_clean();
+            $mail->AltBody = "Bonjour {$order['customer_name']},\n\n" . $messageTemplates[$statusToNotify] . "\n\nEn cas de souci : commandes@bd-pokecards.ch";
+
+            $mail->send();
+            $_SESSION['flash_message'] = 'Statut mis à jour et e-mail de notification envoyé.';
+        } catch (Exception $e) {
+            $_SESSION['flash_message'] = "Statut mis à jour mais l’e-mail n’a pas pu être envoyé.";
+        }
+    }
+}
+
 $shippingLabels = [
     'shr_1RSLlAH9F6vNTkOcS0wFavLY' => '🎁 Livraison gratuite',
     'shr_1RRHZ4H9F6vNTkOclAr1ctuZ' => '✉️ Lettre standard',
@@ -74,7 +151,6 @@ $shippingLabels = [
 $shippingRateId = $order['shipping_rate_id'] ?? null;
 $shippingLabel = $shippingLabels[$shippingRateId] ?? 'Méthode inconnue';
 ?>
-?>
 
 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
     <div class="flex justify-between items-center mb-6">
@@ -83,6 +159,13 @@ $shippingLabel = $shippingLabels[$shippingRateId] ?? 'Méthode inconnue';
             <i class="fas fa-arrow-left mr-1"></i> Retour aux commandes
         </a>
     </div>
+
+    <?php if (!empty($_SESSION['flash_message'])): ?>
+        <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-6">
+            <p><?= htmlspecialchars($_SESSION['flash_message']) ?></p>
+        </div>
+        <?php unset($_SESSION['flash_message']); ?>
+    <?php endif; ?>
 
     <?php if ($success): ?>
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
@@ -100,6 +183,21 @@ $shippingLabel = $shippingLabels[$shippingRateId] ?? 'Méthode inconnue';
                 </div>
             <?php endif; ?>
         </div>
+    <?php endif; ?>
+
+    <?php if ($success && $oldStatus !== $order['status'] && !isset($_POST['send_email_notification'])): ?>
+        <form method="post" class="mt-4 mb-4 bg-yellow-50 border border-yellow-300 rounded-md p-4 space-y-3"
+            onsubmit="return confirm('Souhaitez-vous envoyer un e-mail au client pour l’informer du changement de statut ?');">
+            <input type="hidden" name="send_email_notification" value="1">
+            <input type="hidden" name="status_to_notify" value="<?= htmlspecialchars($order['status']) ?>">
+            <p class="text-sm text-gray-700">
+                Le statut est désormais <strong><?= $statusText[$order['status']] ?></strong>.
+                Souhaitez-vous envoyer un e-mail de notification au client ?
+            </p>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Envoyer l’e-mail de notification
+            </button>
+        </form>
     <?php endif; ?>
 
     <?php if (!empty($error)): ?>
