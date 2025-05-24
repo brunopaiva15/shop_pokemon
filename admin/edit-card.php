@@ -305,11 +305,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <div>
-                    <label for="rarity" class="block text-sm font-medium text-gray-700 mb-1">Rareté *</label>
+                    <label for="rarity" class="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                        Rareté *
+                        <a href="https://urlr.me/twu5Pa" target="_blank" class="text-blue-600 hover:text-blue-800" title="En savoir plus sur les raretés">
+                            <span class="inline-block w-4 h-4 text-center bg-gray-200 text-gray-700 rounded-full text-xs leading-4 font-bold">i</span>
+                        </a>
+                    </label>
                     <select id="rarity" name="rarity" required class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">-- Sélectionner une rareté --</option>
                         <?php foreach (CARD_RARITIES as $code => $name): ?>
-                            <option value="<?= $code ?>" <?= ($card['rarity'] == $code) ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
+                            <option value="<?= $code ?>" <?= ($card['rarity'] == $code) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($name) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
