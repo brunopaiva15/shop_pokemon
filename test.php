@@ -20,6 +20,7 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>BDPokéCards - Instagram</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-sn3tiQgPVKMRaRhG5mpSmPVzUMvQuwWhn8DR3/NK1KQdTxz+2lKaS7rnv1MgTkITMFIEkDxFJWxFpGmYv9Xuhg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         .random-card {
             transition: all 0.5s ease;
@@ -29,7 +30,7 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen space-y-6 px-4">
 
 <!-- Carré principal -->
-<div class="w-full max-w-[640px] aspect-square relative bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200" id="cardContainer">
+<div id="captureZone" class="w-full max-w-[640px] aspect-square relative bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
 
     <!-- Cartes Pokémon flottantes -->
     <?php if (count($cards) === 6): ?>
@@ -55,12 +56,14 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </div>
 
-<!-- Boutons en-dehors -->
-<div class="flex gap-4 flex-wrap justify-center">
+<!-- Boutons -->
+<div class="flex flex-wrap justify-center gap-4">
     <button onclick="shuffleCards()" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded">Disposition aléatoire</button>
     <button onclick="resetCards()" class="bg-gray-500 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded">Disposition normale</button>
+    <button onclick="exportPNG()" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded">Exporter en image</button>
 </div>
 
+<!-- JS logique -->
 <script>
 const positions = [
     { top: '1rem', left: '1rem', rotate: -10 },
@@ -104,6 +107,19 @@ function shuffleCards() {
         [order[i], order[j]] = [order[j], order[i]];
     }
     applyPositions(order);
+}
+
+function exportPNG() {
+    const zone = document.getElementById('captureZone');
+    html2canvas(zone, {
+        useCORS: true,
+        scale: 2
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'bdpokecards-instagram.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
 }
 
 // Initialisation
