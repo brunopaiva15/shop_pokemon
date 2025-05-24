@@ -110,17 +110,26 @@ function getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $v
         $params[] = $priceMax;
     }
 
-    if ($sortBy === 'price' && $sortOrder === 'DESC' && $sort === 'relevance') {
-        // Afficher d'abord les cartes créées il y a moins de 14 jours, puis trier par prix décroissant et numéro croissant
-        $query .= " ORDER BY (c.created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)) DESC, price DESC, c.card_number ASC";
-    } else {
-        if ($sortBy === 'card_number') {
-            $query .= " ORDER BY s.name ASC, c.card_number $sortOrder";
-        } elseif ($sortBy === 'price') {
-            $query .= " ORDER BY price $sortOrder";
-        } else {
+    // Tri avancé personnalisé selon le type sélectionné
+    switch ($sort) {
+        case 'number_asc': // Tri par série (A-Z), puis numéro croissant
+            $query .= " ORDER BY s.name ASC, c.card_number ASC";
+            break;
+        case 'number_desc': // Tri par série (A-Z), puis numéro décroissant
+            $query .= " ORDER BY s.name ASC, c.card_number DESC";
+            break;
+        case 'price_low': // Tri par prix croissant, puis série et numéro pour cohérence
+            $query .= " ORDER BY price ASC, s.name ASC, c.card_number ASC";
+            break;
+        case 'price_high': // Tri par prix décroissant, puis série et numéro pour cohérence
+            $query .= " ORDER BY price DESC, s.name ASC, c.card_number ASC";
+            break;
+        case 'relevance': // D'abord les cartes récentes (<14j), puis tri prix + série + numéro
+            $query .= " ORDER BY (c.created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)) DESC, price DESC, s.name ASC, c.card_number ASC";
+            break;
+        default: // Tous les autres tris standards (nom, date, etc.)
             $query .= " ORDER BY c.$sortBy $sortOrder";
-        }
+            break;
     }
 
     $stmt = $conn->prepare($query);
