@@ -14,7 +14,7 @@
 
         <div class="flex items-center gap-2">
             <i class="fas fa-headset text-gray-600 text-xl"></i>
-            <span>Support client – réponse sous 24h</span>
+            <span>Support client – réponse sous 48h</span>
         </div>
 
         <div class="flex items-center gap-2">
