@@ -1,101 +1,65 @@
+<?php
+// publication-instagram.php
+require_once 'includes/db.php';
+
+// Récupération de 6 cartes aléatoires avec image
+$conn = getDbConnection();
+$stmt = $conn->query("SELECT image_url FROM cards WHERE image_url IS NOT NULL ORDER BY RAND() LIMIT 6");
+$cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
+    <title>BDPokéCards - Instagram</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BDPokéCards - Publication Instagram</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
-    
-    <!-- Format carré Instagram 1080x1080 -->
-    <div class="w-[600px] h-[600px] bg-gray-100 relative overflow-hidden">
-        
-        <!-- Cartes Pokémon dispersées en fond (comme sur votre page) -->
-        <div class="absolute inset-0 pointer-events-none select-none">
-            <!-- Carte en haut à gauche -->
-            <img src="https://images.pokemontcg.io/swsh1/25_hires.png" alt="Pikachu"
-                class="w-20 absolute top-8 left-4 rotate-[-15deg] opacity-80">
 
-            <!-- Carte en haut à droite -->
-            <img src="https://images.pokemontcg.io/base1/4_hires.png" alt="Charizard"
-                class="w-20 absolute top-12 right-8 rotate-[12deg] opacity-80">
+<body class="bg-gray-100 flex items-center justify-center">
 
-            <!-- Carte au milieu gauche -->
-            <img src="https://images.pokemontcg.io/base1/7_hires.png" alt="Blastoise"
-                class="w-18 absolute top-1/2 left-2 transform -translate-y-1/2 rotate-[-8deg] opacity-80">
+    <div class="w-full max-w-[640px] aspect-square relative bg-white overflow-hidden rounded-lg shadow-lg border border-gray-200">
 
-            <!-- Carte au milieu droite -->
-            <img src="https://images.pokemontcg.io/base1/15_hires.png" alt="Venusaur"
-                class="w-18 absolute top-1/2 right-4 transform -translate-y-1/2 rotate-[18deg] opacity-80">
+        <!-- Cartes Pokémon dispersées -->
+        <?php if (count($cards) >= 6): ?>
+            <!-- Desktop -->
+            <img src="<?= $cards[0]['image_url'] ?>" class="hidden sm:block w-20 absolute top-4 left-4 rotate-[-15deg] opacity-60 pointer-events-none select-none">
+            <img src="<?= $cards[1]['image_url'] ?>" class="hidden sm:block w-20 absolute top-4 right-4 rotate-[12deg] opacity-60 pointer-events-none select-none">
+            <img src="<?= $cards[2]['image_url'] ?>" class="hidden sm:block w-20 absolute bottom-4 left-4 rotate-[10deg] opacity-60 pointer-events-none select-none">
+            <img src="<?= $cards[3]['image_url'] ?>" class="hidden sm:block w-20 absolute bottom-4 right-4 rotate-[-10deg] opacity-60 pointer-events-none select-none">
+            <img src="<?= $cards[4]['image_url'] ?>" class="hidden sm:block w-20 absolute top-1/2 left-[-20px] transform -translate-y-1/2 rotate-[6deg] opacity-60 pointer-events-none select-none">
+            <img src="<?= $cards[5]['image_url'] ?>" class="hidden sm:block w-20 absolute top-1/2 right-[-20px] transform -translate-y-1/2 rotate-[-6deg] opacity-60 pointer-events-none select-none">
 
-            <!-- Carte en bas à gauche -->
-            <img src="https://images.pokemontcg.io/swsh1/53_hires.png" alt="Mewtwo"
-                class="w-20 absolute bottom-16 left-6 rotate-[10deg] opacity-80">
+            <!-- Mobile -->
+            <img src="<?= $cards[0]['image_url'] ?>" class="block sm:hidden w-20 absolute top-3 left-1/2 transform -translate-x-1/2 rotate-[-10deg] opacity-60 pointer-events-none select-none">
+            <img src="<?= $cards[1]['image_url'] ?>" class="block sm:hidden w-20 absolute bottom-3 left-1/2 transform -translate-x-1/2 rotate-[12deg] opacity-60 pointer-events-none select-none">
+        <?php endif; ?>
 
-            <!-- Carte en bas à droite -->
-            <img src="https://images.pokemontcg.io/base1/16_hires.png" alt="Nidoking"
-                class="w-20 absolute bottom-8 right-2 rotate-[-20deg] opacity-80">
-        </div>
-
-        <!-- Contenu principal centré (comme votre formulaire) -->
-        <div class="absolute inset-0 flex items-center justify-center px-4">
-            <div class="bg-white border border-gray-200 shadow-lg rounded-md p-8 max-w-md w-full relative z-10 text-center">
-                
-                <!-- Titre principal -->
-                <h1 class="text-3xl font-extrabold text-gray-700 mb-2">BDPokéCards</h1>
-                <p class="text-sm text-gray-500 mb-6">Ta boutique en ligne préférée de cartes Pokémon</p>
-
-                <!-- Badge d'annonce -->
-                <div class="mb-6">
-                    <span class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                        <i class="fas fa-rocket mr-2 text-xs"></i> LANCEMENT OFFICIEL
-                    </span>
-                </div>
-
-                <!-- Date de lancement -->
-                <div class="bg-gray-50 border-2 border-gray-200 rounded-lg p-6 mb-6">
-                    <p class="text-sm text-gray-500 mb-1">Rendez-vous le</p>
-                    <p class="text-4xl font-extrabold text-gray-800 mb-1">1er JUIN</p>
-                    <p class="text-xl font-bold text-gray-700">2025</p>
-                </div>
-
-                <!-- Points clés -->
-                <div class="grid grid-cols-3 gap-2 mb-6 text-xs">
-                    <div class="bg-blue-50 p-2 rounded">
-                        <i class="fas fa-shipping-fast text-blue-600 mb-1"></i>
-                        <p class="text-blue-800 font-medium">Livraison rapide</p>
-                    </div>
-                    <div class="bg-purple-50 p-2 rounded">
-                        <i class="fas fa-certificate text-purple-600 mb-1"></i>
-                        <p class="text-purple-800 font-medium">100% authentique</p>
-                    </div>
-                    <div class="bg-orange-50 p-2 rounded">
-                        <i class="fas fa-star text-orange-600 mb-1"></i>
-                        <p class="text-orange-800 font-medium">Prix compétitifs</p>
-                    </div>
-                </div>
-
-                <!-- Call to action -->
-                <div class="border-t pt-4">
-                    <p class="text-lg font-semibold text-gray-700 mb-1">Prépare-toi, jeune dresseur !</p>
-                    <p class="text-xs text-gray-400">L'aventure commence bientôt...</p>
-                </div>
-
-                <!-- Hashtags -->
-                <div class="mt-4 pt-2 border-t border-gray-100">
-                    <p class="text-xs text-gray-400">#BDPokéCards #Pokémon #TCG #Suisse #ComingSoon</p>
-                </div>
+        <!-- Contenu principal -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center px-6 text-center z-10">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2 drop-shadow">BDPokéCards</h1>
+            <p class="text-base sm:text-lg text-gray-600 mb-4">Ta nouvelle boutique Pokémon ouvre officiellement</p>
+            <div class="inline-block bg-blue-600 text-white text-sm sm:text-base font-semibold px-4 py-2 rounded-full shadow-lg mb-6">
+                Le 1er juin 2025
+            </div>
+            <p class="text-sm text-gray-500">Suis-nous pour ne pas rater le lancement !</p>
+            <div class="mt-4 flex justify-center space-x-4 text-blue-500 text-xl">
+                <i class="fab fa-instagram"></i>
+                <i class="fab fa-tiktok"></i>
+                <i class="fab fa-discord"></i>
             </div>
         </div>
-
-        <!-- Logo/watermark discret -->
-        <div class="absolute bottom-4 left-4 text-xs text-gray-400 z-20">
-            bd-pokecards.ch
-        </div>
-
     </div>
-    
+
 </body>
 </html>
