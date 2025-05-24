@@ -143,10 +143,10 @@ if (isset($_POST['send_email_notification']) && $_POST['send_email_notification'
 }
 
 $shippingLabels = [
-    'shr_1RSLlAH9F6vNTkOcS0wFavLY' => '🎁 Livraison gratuite',
-    'shr_1RRHZ4H9F6vNTkOclAr1ctuZ' => '✉️ Lettre standard',
-    'shr_1RSLkqH9F6vNTkOcuCiGXjZg' => '✉️ Lettre suivie',
-    'shr_1RSLl0H9F6vNTkOcgpjAaTb7' => '📦 Colis PostPac Economy'
+    'shr_1RRsuZHcJqWU7jDw4iXkhE3X' => '🎁 Livraison gratuite',
+    'shr_1RRDAJHcJqWU7jDwqMuJgj97' => '✉️ La Poste Suisse (Lettre standard)',
+    'shr_1RRxaXHcJqWU7jDw3RMoUtvP' => '✉️ La Poste Suisse (Lettre standard avec suivi)',
+    'shr_1RRxomHcJqWU7jDwI3b0htRj' => '📦 La Poste Suisse (PostPac Economy)'
 ];
 $shippingRateId = $order['shipping_rate_id'] ?? null;
 $shippingLabel = $shippingLabels[$shippingRateId] ?? 'Méthode inconnue';
