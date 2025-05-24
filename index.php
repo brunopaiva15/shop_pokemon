@@ -114,9 +114,13 @@ function getAllFilteredCards($searchTerm, $seriesIds, $conditions, $rarities, $v
         // Afficher d'abord les cartes créées il y a moins de 14 jours, puis trier par prix décroissant et numéro croissant
         $query .= " ORDER BY (c.created_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)) DESC, price DESC, c.card_number ASC";
     } else {
-        $query .= $sortBy === 'price'
-            ? " ORDER BY price $sortOrder"
-            : " ORDER BY c.$sortBy $sortOrder";
+        if ($sortBy === 'card_number') {
+            $query .= " ORDER BY s.name ASC, c.card_number $sortOrder";
+        } elseif ($sortBy === 'price') {
+            $query .= " ORDER BY price $sortOrder";
+        } else {
+            $query .= " ORDER BY c.$sortBy $sortOrder";
+        }
     }
 
     $stmt = $conn->prepare($query);

@@ -120,7 +120,13 @@ if (isset($_GET['updated'])) {
                                                 </a>
                                             </h3>
                                             <div class="text-sm text-gray-500">
-                                                <?php echo htmlspecialchars($item['series_name']); ?><br>
+                                                <?php echo htmlspecialchars($item['series_name']); ?>
+                                                <?php if (!empty($item['language'])): ?>
+                                                    <img src="assets/images/<?php echo htmlspecialchars($item['language']); ?>.png"
+                                                        alt="<?php echo htmlspecialchars($item['language']); ?>"
+                                                        class="h-4 ml-2 align-middle inline-block" style="vertical-align:middle;">
+                                                <?php endif; ?>
+                                                <br>
                                             </div>
                                         </div>
                                     </div>

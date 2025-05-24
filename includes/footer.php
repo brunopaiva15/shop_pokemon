@@ -72,7 +72,7 @@
                     <?php echo ADMIN_EMAIL; ?>
                 </a>
                 <div class="mt-4">
-                    <h4 class="text-lg font-semibold mb-2">Réseaux sociaux</h4>
+                    <h4 class="text-lg font-semibold mb-2">Nos réseaux</h4>
                     <a href="https://www.instagram.com/bd_pokecards" target="_blank" class="inline-flex items-center gap-2 text-gray-300 hover:text-white transition">
                         <i class="fab fa-instagram text-xl"></i> @bd_pokecards
                     </a>

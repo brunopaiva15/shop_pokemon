@@ -72,8 +72,7 @@ require_once 'includes/header.php';
         <p>En passant commande, le Client reconnaît avoir lu, compris et accepté les présentes conditions générales de vente.</p>
         <p>
             Pour toute question, veuillez contacter
-            <a href="mailto:commandes@bd-pokecards.ch" class="text-blue-600 underline">commandes@bd-pokecards.ch</a>
-            ou par téléphone au <a href="tel:0792898907" class="text-blue-600 underline">079 289 89 07</a>.
+            <a href="mailto:commandes@bd-pokecards.ch" class="text-blue-600 underline">commandes@bd-pokecards.ch</a>.
         </p>
         <p>Rédigé le 23.05.2025.</p>
         <p>BDPokéCards</p>
