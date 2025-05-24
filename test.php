@@ -63,6 +63,7 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <button onclick="exportPNG()" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded">Exporter en image</button>
 </div>
 
+<!-- Script -->
 <script>
 const positions = [
     { top: '1rem', left: '1rem', rotate: -10 },
@@ -112,7 +113,9 @@ function exportPNG() {
     const zone = document.getElementById('captureZone');
     html2canvas(zone, {
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: null,
+        scrollX: 0,
+        scrollY: 0,
         scale: 2
     }).then(canvas => {
         const link = document.createElement('a');
