@@ -20,7 +20,7 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>BDPokéCards - Instagram</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-sn3tiQgPVKMRaRhG5mpSmPVzUMvQuwWhn8DR3/NK1KQdTxz+2lKaS7rnv1MgTkITMFIEkDxFJWxFpGmYv9Xuhg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         .random-card {
             transition: all 0.5s ease;
@@ -29,7 +29,7 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen space-y-6 px-4">
 
-<!-- Carré principal -->
+<!-- Zone exportable -->
 <div id="captureZone" class="w-full max-w-[640px] aspect-square relative bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
 
     <!-- Cartes Pokémon flottantes -->
@@ -63,7 +63,6 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <button onclick="exportPNG()" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded">Exporter en image</button>
 </div>
 
-<!-- JS logique -->
 <script>
 const positions = [
     { top: '1rem', left: '1rem', rotate: -10 },
@@ -113,6 +112,7 @@ function exportPNG() {
     const zone = document.getElementById('captureZone');
     html2canvas(zone, {
         useCORS: true,
+        backgroundColor: '#ffffff',
         scale: 2
     }).then(canvas => {
         const link = document.createElement('a');
@@ -122,7 +122,6 @@ function exportPNG() {
     });
 }
 
-// Initialisation
 resetCards();
 </script>
 
