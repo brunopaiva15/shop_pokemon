@@ -20,7 +20,6 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>BDPokéCards - Instagram</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         .random-card {
             transition: all 0.5s ease;
@@ -29,8 +28,9 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen space-y-6 px-4">
 
-<!-- Zone exportable -->
-<div id="captureZone" class="w-full max-w-[640px] aspect-square relative bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+<!-- Carré parfaitement carré et arrondi -->
+<div id="captureZone"
+     class="w-full max-w-[640px] aspect-square relative bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
 
     <!-- Cartes Pokémon flottantes -->
     <?php if (count($cards) === 6): ?>
@@ -60,10 +60,8 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <div class="flex flex-wrap justify-center gap-4">
     <button onclick="shuffleCards()" class="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded">Disposition aléatoire</button>
     <button onclick="resetCards()" class="bg-gray-500 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded">Disposition normale</button>
-    <button onclick="exportPNG()" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded">Exporter en image</button>
 </div>
 
-<!-- Script -->
 <script>
 const positions = [
     { top: '1rem', left: '1rem', rotate: -10 },
@@ -109,22 +107,7 @@ function shuffleCards() {
     applyPositions(order);
 }
 
-function exportPNG() {
-    const zone = document.getElementById('captureZone');
-    html2canvas(zone, {
-        useCORS: true,
-        backgroundColor: null,
-        scrollX: 0,
-        scrollY: 0,
-        scale: 2
-    }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'bdpokecards-instagram.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    });
-}
-
+// Initialisation
 resetCards();
 </script>
 
