@@ -143,4 +143,20 @@
     .animate-scroll-mobile {
         animation: scroll-left-loop 15s linear infinite;
     }
+
+    .action-button-container {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    form .md\\:col-span-4 + div {
+        margin-top: 0.5rem;
+    }
+}
+
+.truncate {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

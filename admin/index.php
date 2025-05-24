@@ -224,16 +224,15 @@ $lowStockCards = $stmt->fetchAll();
     </div>
 <?php endif; ?>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-8">
     <!-- Dernières commandes -->
     <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-bold mb-4">Dernières commandes</h2>
-
         <?php if (empty($recentOrders)): ?>
             <p class="text-gray-500">Aucune commande trouvée.</p>
         <?php else: ?>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="min-w-full text-sm divide-y divide-gray-200">
                     <thead>
                         <tr>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
@@ -335,7 +334,7 @@ $lowStockCards = $stmt->fetchAll();
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
     <!-- Cartes les plus vendues -->
     <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-bold mb-4">Cartes les plus vendues</h2>
@@ -410,7 +409,7 @@ $lowStockCards = $stmt->fetchAll();
 
 <div class="bg-white rounded-lg shadow-md p-6 mt-8">
     <h2 class="text-xl font-bold mb-4">Évolution des ventes (6 mois)</h2>
-    <canvas id="salesChart" height="100"></canvas>
+    <canvas id="salesChart" class="w-full h-64 sm:h-80"></canvas>
 </div>
 
 <script>
