@@ -1,7 +1,15 @@
 <?php
 require_once 'includes/db.php';
 $conn = getDbConnection();
-$stmt = $conn->query("SELECT image_url FROM cards WHERE image_url IS NOT NULL ORDER BY RAND() LIMIT 6");
+
+$stmt = $conn->query("
+    SELECT c.image_url
+    FROM cards c
+    JOIN card_conditions cc ON cc.card_id = c.id
+    WHERE c.image_url IS NOT NULL
+    ORDER BY cc.price DESC
+    LIMIT 6
+");
 $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -19,12 +27,15 @@ $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- Cartes Pokémon flottantes -->
     <?php if (count($cards) === 6): ?>
-        <img src="<?= $cards[0]['image_url'] ?>" class="absolute w-20 rotate-[-15deg] top-3 left-4 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[1]['image_url'] ?>" class="absolute w-20 rotate-[12deg] top-5 right-4 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[2]['image_url'] ?>" class="absolute w-20 rotate-[10deg] bottom-5 left-3 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[3]['image_url'] ?>" class="absolute w-20 rotate-[-10deg] bottom-4 right-4 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[4]['image_url'] ?>" class="absolute w-20 rotate-[8deg] top-1/2 left-0 transform -translate-y-1/2 z-0 pointer-events-none select-none">
-        <img src="<?= $cards[5]['image_url'] ?>" class="absolute w-20 rotate-[-8deg] top-1/2 right-0 transform -translate-y-1/2 z-0 pointer-events-none select-none">
+        <!-- Haut -->
+        <img src="<?= $cards[0]['image_url'] ?>" class="absolute w-20 top-4 left-4 rotate-[-10deg] z-0 pointer-events-none select-none">
+        <img src="<?= $cards[1]['image_url'] ?>" class="absolute w-20 top-3 left-1/2 -translate-x-1/2 rotate-[8deg] z-0 pointer-events-none select-none">
+        <img src="<?= $cards[2]['image_url'] ?>" class="absolute w-20 top-4 right-4 rotate-[10deg] z-0 pointer-events-none select-none">
+
+        <!-- Bas -->
+        <img src="<?= $cards[3]['image_url'] ?>" class="absolute w-20 bottom-4 left-4 rotate-[12deg] z-0 pointer-events-none select-none">
+        <img src="<?= $cards[4]['image_url'] ?>" class="absolute w-20 bottom-3 left-1/2 -translate-x-1/2 rotate-[-8deg] z-0 pointer-events-none select-none">
+        <img src="<?= $cards[5]['image_url'] ?>" class="absolute w-20 bottom-4 right-4 rotate-[-12deg] z-0 pointer-events-none select-none">
     <?php endif; ?>
 
     <!-- Bloc central -->
