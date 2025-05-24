@@ -3,7 +3,6 @@
 <!-- Bannière informative visible et contrastée -->
 <div class="bg-gray-100 text-gray-800 py-4 border-y border-gray-300 shadow-sm">
     <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-base md:text-lg font-medium px-4 text-center md:text-left">
-
         <div class="flex items-center gap-2">
             <i class="fas fa-map-marker-alt text-gray-600 text-xl"></i>
             <span class="flex items-center gap-2">
@@ -29,14 +28,12 @@
             </a>
         </div>
 
-        <!-- FAQ -->
         <div class="flex items-center gap-2">
             <i class="fas fa-question-circle text-gray-600 text-xl"></i>
             <a href="<?php echo SITE_URL; ?>/faq.php" class="underline hover:text-gray-900 transition">
                 FAQ
             </a>
         </div>
-
     </div>
 </div>
 
@@ -58,7 +55,6 @@
                 </ul>
             </div>
 
-            <!-- Conditions Générales et Politiques -->
             <div>
                 <h3 class="text-xl font-bold mb-4">Légal</h3>
                 <ul class="space-y-2">
@@ -66,7 +62,6 @@
                     <li><a href="<?php echo SITE_URL; ?>/privacy.php" class="text-gray-300 hover:text-white transition">Politique de Confidentialité</a></li>
                     <li><a href="<?php echo SITE_URL; ?>/returns.php" class="text-gray-300 hover:text-white transition">Politique de Retour</a></li>
                     <li><a href="<?php echo SITE_URL; ?>/shipping.php" class="text-gray-300 hover:text-white transition">Paiements et Livraison</a></li>
-
                 </ul>
             </div>
 
@@ -76,6 +71,12 @@
                 <a href="mailto:<?php echo ADMIN_EMAIL; ?>" class="text-yellow-400 hover:text-yellow-300 transition">
                     <?php echo ADMIN_EMAIL; ?>
                 </a>
+                <div class="mt-4">
+                    <h4 class="text-lg font-semibold mb-2">Réseaux sociaux</h4>
+                    <a href="https://www.instagram.com/bd_pokecards" target="_blank" class="inline-flex items-center gap-2 text-gray-300 hover:text-white transition">
+                        <i class="fab fa-instagram text-xl"></i> @bd_pokecards
+                    </a>
+                </div>
             </div>
         </div>
 

@@ -66,10 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
 }
 
 $shippingLabels = [
-    'shr_1RRsuZHcJqWU7jDw4iXkhE3X' => '🎁 Livraison gratuite',
-    'shr_1RRDAJHcJqWU7jDwqMuJgj97' => '✉️ Lettre standard',
-    'shr_1RRxaXHcJqWU7jDw3RMoUtvP' => '✉️ Lettre suivie',
-    'shr_1RRxomHcJqWU7jDwI3b0htRj' => '📦 Colis PostPac Economy'
+    'shr_1RSLlAH9F6vNTkOcS0wFavLY' => '🎁 Livraison gratuite',
+    'shr_1RRHZ4H9F6vNTkOclAr1ctuZ' => '✉️ Lettre standard',
+    'shr_1RSLkqH9F6vNTkOcuCiGXjZg' => '✉️ Lettre suivie',
+    'shr_1RSLl0H9F6vNTkOcgpjAaTb7' => '📦 Colis PostPac Economy'
 ];
 $shippingRateId = $order['shipping_rate_id'] ?? null;
 $shippingLabel = $shippingLabels[$shippingRateId] ?? 'Méthode inconnue';
